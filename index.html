@@ -3,1015 +3,417 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>연구소 업무 투명화 대시보드</title>
+    <title>연구소 업무 관리 대시보드 - 로그인</title>
     <style>
-        /* ==========================================
-           글로벌 변수 및 리셋
-        ========================================== */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
         
-        :root {
-            --primary-color: #2c5aa0;
-            --secondary-color: #5b8fd9;
-            --success-color: #28a745;
-            --warning-color: #ffc107;
-            --danger-color: #dc3545;
-            --light-bg: #f8f9fa;
-            --dark-text: #212529;
-            --border-color: #dee2e6;
-            --shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-        
         body {
             font-family: 'Malgun Gothic', '맑은 고딕', sans-serif;
-            font-size: 18px;
-            line-height: 1.6;
-            color: var(--dark-text);
-            background-color: var(--light-bg);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-        }
-        
-        /* ==========================================
-           헤더
-        ========================================== */
-        .header {
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-            color: white;
-            padding: 20px;
-            box-shadow: var(--shadow);
-        }
-        
-        .header-content {
-            max-width: 1400px;
-            margin: 0 auto;
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .header h1 {
-            font-size: 28px;
-            font-weight: bold;
-        }
-        
-        .user-info {
-            text-align: right;
-            font-size: 16px;
-        }
-        
-        .user-name {
-            font-weight: bold;
-            margin-bottom: 4px;
-        }
-        
-        .permission-badge {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 12px;
-            background: rgba(255,255,255,0.2);
-            font-size: 14px;
-        }
-        
-        /* ==========================================
-           네비게이션
-        ========================================== */
-        .nav-container {
-            background: white;
-            padding: 15px;
-            box-shadow: var(--shadow);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-        
-        .nav-buttons {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 10px;
-            max-width: 1400px;
-            margin: 0 auto;
-        }
-        
-        .nav-btn {
-            background: white;
-            border: 3px solid var(--primary-color);
-            color: var(--primary-color);
-            padding: 18px 12px;
-            font-size: 19px;
-            font-weight: bold;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            min-height: 70px;
-            display: flex;
-            align-items: center;
             justify-content: center;
-            text-align: center;
+            align-items: center;
+            padding: 20px;
         }
         
-        .nav-btn:hover {
-            background: var(--primary-color);
-            color: white;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        }
-        
-        .nav-btn.active {
-            background: var(--primary-color);
-            color: white;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-        }
-        
-        .nav-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-        
-        /* ==========================================
-           콘텐츠 영역
-        ========================================== */
-        .content-container {
-            max-width: 1400px;
-            margin: 30px auto;
-            padding: 0 20px;
-        }
-        
-        .page {
-            display: none;
-            animation: fadeIn 0.4s ease;
-        }
-        
-        .page.active {
-            display: block;
-        }
-        
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        
-        /* ==========================================
-           카드
-        ========================================== */
-        .card {
+        .login-container {
             background: white;
-            border-radius: 12px;
-            padding: 25px;
-            margin-bottom: 25px;
-            box-shadow: var(--shadow);
-            border-left: 5px solid var(--primary-color);
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 50px;
+            max-width: 500px;
+            width: 100%;
         }
         
-        .card-title {
-            font-size: 24px;
-            font-weight: bold;
-            margin-bottom: 20px;
-            color: var(--primary-color);
-            border-bottom: 2px solid var(--border-color);
-            padding-bottom: 12px;
-        }
-        
-        /* ==========================================
-           통계 카드
-        ========================================== */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
+        .logo {
+            text-align: center;
             margin-bottom: 30px;
         }
         
-        .stat-card {
-            background: white;
-            border-radius: 12px;
-            padding: 25px;
-            text-align: center;
-            box-shadow: var(--shadow);
-            border-top: 4px solid var(--primary-color);
+        .logo h1 {
+            font-size: 32px;
+            color: #2c5aa0;
+            margin-bottom: 10px;
         }
         
-        .stat-card.warning { border-top-color: var(--warning-color); }
-        .stat-card.danger { border-top-color: var(--danger-color); background: #fff5f5; }
-        .stat-card.success { border-top-color: var(--success-color); }
-        
-        .stat-label {
-            font-size: 18px;
+        .logo p {
+            font-size: 16px;
             color: #666;
-            margin-bottom: 12px;
         }
         
-        .stat-value {
-            font-size: 42px;
-            font-weight: bold;
-            color: var(--primary-color);
-            margin-bottom: 8px;
-        }
-        
-        .stat-card.warning .stat-value { color: var(--warning-color); }
-        .stat-card.danger .stat-value { color: var(--danger-color); }
-        .stat-card.success .stat-value { color: var(--success-color); }
-        
-        .stat-unit {
-            font-size: 20px;
-            color: #888;
-        }
-        
-        /* ==========================================
-           버튼
-        ========================================== */
-        .btn {
-            padding: 15px 30px;
-            font-size: 18px;
-            font-weight: bold;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            min-height: 55px;
-        }
-        
-        .btn-primary {
-            background: var(--primary-color);
-            color: white;
-        }
-        
-        .btn-primary:hover {
-            background: #1e4070;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-        }
-        
-        .btn-success {
-            background: var(--success-color);
-            color: white;
-        }
-        
-        .btn-success:hover {
-            background: #1e7e34;
-        }
-        
-        .btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-        
-        /* ==========================================
-           폼
-        ========================================== */
         .form-group {
-            margin-bottom: 20px;
+            margin-bottom: 25px;
         }
         
         .form-label {
             display: block;
             font-size: 18px;
             font-weight: bold;
-            margin-bottom: 8px;
-            color: var(--dark-text);
+            margin-bottom: 10px;
+            color: #333;
         }
         
-        .form-input,
-        .form-select,
-        .form-textarea {
+        .form-input {
             width: 100%;
-            padding: 12px;
-            font-size: 17px;
-            border: 2px solid var(--border-color);
-            border-radius: 6px;
-            font-family: inherit;
+            padding: 15px;
+            font-size: 18px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            transition: all 0.3s;
         }
         
-        .form-input:focus,
-        .form-select:focus,
-        .form-textarea:focus {
+        .form-input:focus {
             outline: none;
-            border-color: var(--primary-color);
+            border-color: #2c5aa0;
             box-shadow: 0 0 0 3px rgba(44, 90, 160, 0.1);
         }
         
-        .form-textarea {
-            min-height: 100px;
-            resize: vertical;
-        }
-        
-        .form-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-        }
-        
-        @media (max-width: 768px) {
-            .form-row {
-                grid-template-columns: 1fr;
-            }
-        }
-        
-        /* ==========================================
-           테이블
-        ========================================== */
-        .table-container {
-            overflow-x: auto;
-            margin-top: 20px;
-        }
-        
-        table {
+        .btn-login {
             width: 100%;
-            border-collapse: collapse;
-            background: white;
-            font-size: 16px;
-        }
-        
-        th {
-            background: var(--primary-color);
-            color: white;
-            padding: 16px 12px;
-            text-align: left;
-            font-size: 18px;
+            padding: 18px;
+            font-size: 20px;
             font-weight: bold;
+            background: #2c5aa0;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
         }
         
-        td {
-            padding: 14px 12px;
-            border-bottom: 1px solid var(--border-color);
+        .btn-login:hover:not(:disabled) {
+            background: #1e4070;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
         }
         
-        tr:hover {
-            background: #f8f9fa;
-        }
-        
-        /* ==========================================
-           로딩 & 알림
-        ========================================== */
-        .loading {
-            text-align: center;
-            padding: 60px 20px;
-            font-size: 22px;
-            color: #666;
-        }
-        
-        .loading::after {
-            content: '...';
-            animation: dots 1.5s infinite;
-        }
-        
-        @keyframes dots {
-            0%, 20% { content: '.'; }
-            40% { content: '..'; }
-            60%, 100% { content: '...'; }
+        .btn-login:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
         }
         
         .alert {
-            padding: 18px;
+            padding: 15px;
             border-radius: 8px;
             margin-bottom: 20px;
-            font-size: 17px;
-            border-left: 5px solid;
-        }
-        
-        .alert-success {
-            background: #d4edda;
-            border-color: var(--success-color);
-            color: #155724;
+            font-size: 16px;
         }
         
         .alert-danger {
             background: #f8d7da;
-            border-color: var(--danger-color);
+            border: 1px solid #f5c6cb;
             color: #721c24;
         }
         
-        .alert-warning {
-            background: #fff3cd;
-            border-color: var(--warning-color);
-            color: #856404;
+        .alert-success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
         }
         
         .alert-info {
             background: #d1ecf1;
-            border-color: #17a2b8;
+            border: 1px solid #bee5eb;
             color: #0c5460;
         }
         
-        /* ==========================================
-           모달
-        ========================================== */
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.5);
-            overflow-y: auto;
+        .hint {
+            text-align: center;
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            font-size: 14px;
+            color: #666;
         }
         
-        .modal.active {
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        .hint strong {
+            color: #2c5aa0;
         }
         
-        .modal-content {
+        .demo-accounts {
+            margin-top: 20px;
+            padding: 15px;
+            background: #fff3cd;
+            border: 1px solid #ffeeba;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        
+        .demo-accounts h4 {
+            margin-bottom: 10px;
+            color: #856404;
+        }
+        
+        .demo-accounts code {
             background: white;
-            padding: 30px;
-            border-radius: 12px;
-            max-width: 600px;
-            width: 90%;
-            max-height: 90vh;
-            overflow-y: auto;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
         }
         
-        .modal-header {
-            font-size: 24px;
-            font-weight: bold;
-            margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 2px solid var(--border-color);
+        .hidden {
+            display: none;
         }
         
-        .modal-footer {
-            margin-top: 25px;
-            padding-top: 20px;
-            border-top: 2px solid var(--border-color);
-            display: flex;
-            justify-content: flex-end;
-            gap: 10px;
+        .loading {
+            text-align: center;
+            padding: 40px;
         }
         
-        /* ==========================================
-           반응형
-        ========================================== */
-        @media (max-width: 768px) {
-            .header h1 {
-                font-size: 22px;
-            }
-            
-            .nav-btn {
-                font-size: 17px;
-                padding: 15px 10px;
-                min-height: 65px;
-            }
-            
-            .stat-value {
-                font-size: 36px;
-            }
-            
-            .card-title {
-                font-size: 22px;
-            }
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #2c5aa0;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
         }
         
-        /* ==========================================
-           유틸리티 클래스
-        ========================================== */
-        .text-center { text-align: center; }
-        .text-right { text-align: right; }
-        .mt-20 { margin-top: 20px; }
-        .mb-20 { margin-bottom: 20px; }
-        .hidden { display: none; }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .password-toggle {
+            position: relative;
+        }
+        
+        .toggle-btn {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 20px;
+            color: #666;
+        }
     </style>
 </head>
 <body>
-    <!-- 헤더 -->
-    <div class="header">
-        <div class="header-content">
-            <div>
-                <h1>🔬 연구소 업무 투명화 대시보드</h1>
-                <p style="font-size: 16px; opacity: 0.95;">실시간 업무 가시성 & 인터럽트 관리</p>
-            </div>
-            <div class="user-info">
-                <div class="user-name"><?= userName ?></div>
-                <div class="permission-badge" id="permission-display"><?= permission ?></div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- 네비게이션 -->
-    <div class="nav-container">
-        <div class="nav-buttons">
-            <button class="nav-btn active" onclick="showPage('dashboard')" id="nav-dashboard">
-                📊 대시보드
-            </button>
-            <button class="nav-btn" onclick="showPage('projects')" id="nav-projects">
-                📋 프로젝트
-            </button>
-            <button class="nav-btn" onclick="showPage('interrupt')" id="nav-interrupt">
-                ⚡ 인터럽트
-            </button>
-            <button class="nav-btn" onclick="showPage('assets')" id="nav-assets">
-                📁 자산
-            </button>
-            <button class="nav-btn" onclick="showPage('voc')" id="nav-voc">
-                💬 VOC
-            </button>
-            <button class="nav-btn" onclick="showPage('settings')" id="nav-settings">
-                ⚙️ 설정
-            </button>
-        </div>
-    </div>
-    
-    <!-- 콘텐츠 영역 -->
-    <div class="content-container">
-        <!-- 대시보드 페이지 -->
-        <div id="page-dashboard" class="page active">
-            <div class="loading" id="dashboard-loading">데이터 로딩 중</div>
-            <div id="dashboard-content" style="display: none;">
-                <!-- 통계 카드 -->
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-label">진행중인 프로젝트</div>
-                        <div class="stat-value" id="stat-projects-active">0</div>
-                        <div class="stat-unit">개</div>
-                    </div>
-                    <div class="stat-card danger">
-                        <div class="stat-label">이번 주 인터럽트</div>
-                        <div class="stat-value" id="stat-interrupts-week">0</div>
-                        <div class="stat-unit">건</div>
-                    </div>
-                    <div class="stat-card warning">
-                        <div class="stat-label">평균 인터럽트 비율</div>
-                        <div class="stat-value" id="stat-interrupt-ratio">0</div>
-                        <div class="stat-unit">%</div>
-                    </div>
-                    <div class="stat-card success">
-                        <div class="stat-label">과부하 팀원</div>
-                        <div class="stat-value" id="stat-overloaded">0</div>
-                        <div class="stat-unit">명</div>
-                    </div>
-                </div>
-                
-                <!-- 프로젝트 현황 -->
-                <div class="card">
-                    <div class="card-title">프로젝트 현황</div>
-                    <div id="project-overview"></div>
-                </div>
-                
-                <!-- 인터럽트 분석 -->
-                <div class="card">
-                    <div class="card-title">인터럽트 분석 (부서별)</div>
-                    <div id="interrupt-analysis"></div>
-                </div>
-                
-                <!-- 팀원별 워크로드 -->
-                <div class="card">
-                    <div class="card-title">팀원별 워크로드</div>
-                    <div id="member-workload"></div>
-                </div>
-            </div>
+    <div class="login-container">
+        <div class="logo">
+            <h1>🔬 연구소 대시보드</h1>
+            <p>업무 투명화 & 인터럽트 관리</p>
         </div>
         
-        <!-- 프로젝트 페이지 -->
-        <div id="page-projects" class="page">
-            <div class="card">
-                <div class="card-title">프로젝트 관리</div>
-                <p style="font-size: 17px; color: #666; margin-bottom: 20px;">
-                    연구소 PM 전용 기능입니다.
-                </p>
-                <div id="projects-content">
-                    <div class="loading">프로젝트 데이터 로딩 중</div>
-                </div>
-            </div>
-        </div>
+        <div id="alert-container"></div>
         
-        <!-- 인터럽트 페이지 -->
-        <div id="page-interrupt" class="page">
-            <div class="card">
-                <div class="card-title">⚡ 긴급 업무(인터럽트) 등록</div>
-                <p style="font-size: 17px; color: #666; margin-bottom: 25px;">
-                    갑작스럽게 발생한 업무를 즉시 기록하여 업무 부하를 가시화합니다.
-                </p>
+        <!-- 로그인 폼 -->
+        <div id="login-form">
+            <form onsubmit="handleLogin(event)">
+                <div class="form-group">
+                    <label class="form-label">이메일 주소</label>
+                    <input type="email" 
+                           class="form-input" 
+                           id="email-input" 
+                           placeholder="your-email@company.com"
+                           required
+                           autocomplete="email">
+                </div>
                 
-                <div id="interrupt-alert"></div>
-                
-                <form id="interrupt-form">
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label">담당자 *</label>
-                            <select class="form-select" id="interrupt-member" required>
-                                <option value="">선택하세요</option>
-                            </select>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label class="form-label">요청 부서 *</label>
-                            <input type="text" class="form-input" id="interrupt-dept" required 
-                                   placeholder="예: 생산팀">
-                        </div>
-                    </div>
-                    
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label">요청자</label>
-                            <input type="text" class="form-input" id="interrupt-requester" 
-                                   placeholder="예: 박생산">
-                        </div>
-                        
-                        <div class="form-group">
-                            <label class="form-label">예상 소요시간 (시간) *</label>
-                            <input type="number" class="form-input" id="interrupt-hours" 
-                                   min="0.5" step="0.5" required placeholder="예: 2.5">
-                        </div>
-                    </div>
-                    
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label">중요도 *</label>
-                            <select class="form-select" id="interrupt-importance" required>
-                                <option value="높음">높음</option>
-                                <option value="보통" selected>보통</option>
-                                <option value="낮음">낮음</option>
-                            </select>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label class="form-label">긴급도 *</label>
-                            <select class="form-select" id="interrupt-urgency" required>
-                                <option value="높음">높음</option>
-                                <option value="보통" selected>보통</option>
-                                <option value="낮음">낮음</option>
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">업무 상세 내용 *</label>
-                        <textarea class="form-textarea" id="interrupt-content" required 
-                                  placeholder="예: 생산팀 긴급 회로 수정 요청 - PCB 레이아웃 변경"></textarea>
-                    </div>
-                    
-                    <button type="submit" class="btn btn-primary" style="width: 100%;">
-                        📝 인터럽트 기록 저장
+                <div class="form-group password-toggle">
+                    <label class="form-label">비밀번호</label>
+                    <input type="password" 
+                           class="form-input" 
+                           id="password-input" 
+                           placeholder="비밀번호를 입력하세요"
+                           required
+                           autocomplete="current-password">
+                    <button type="button" class="toggle-btn" onclick="togglePassword()">
+                        👁️
                     </button>
-                </form>
-            </div>
-            
-            <!-- 최근 인터럽트 기록 -->
-            <div class="card">
-                <div class="card-title">최근 인터럽트 기록</div>
-                <div id="interrupt-log"></div>
-            </div>
-        </div>
-        
-        <!-- 자산 페이지 -->
-        <div id="page-assets" class="page">
-            <div class="card">
-                <div class="card-title">베이스라인 & 자산 관리</div>
-                <div id="assets-content">
-                    <div class="loading">자산 데이터 로딩 중</div>
                 </div>
-            </div>
-        </div>
-        
-        <!-- VOC 페이지 -->
-        <div id="page-voc" class="page">
-            <div class="card">
-                <div class="card-title">💬 VOC (고객의 소리) 등록</div>
-                <p style="font-size: 17px; color: #666; margin-bottom: 25px;">
-                    제품 불만, 개선 요청, 아이디어를 자유롭게 작성해주세요.
+                
+                <button type="submit" class="btn-login" id="login-btn">
+                    🔐 로그인
+                </button>
+            </form>
+            
+            <!-- 데모 계정 안내 (개발/테스트용) -->
+            <div class="demo-accounts">
+                <h4>📌 테스트 계정</h4>
+                <p style="margin-bottom: 10px;">
+                    <strong>관리자:</strong> <code>admin@company.com</code> / <code>1234</code><br>
+                    <strong>연구원:</strong> <code>kim@company.com</code> / <code>1234</code><br>
+                    <strong>타부서:</strong> <code>production@company.com</code> / <code>prod1234</code><br>
+                    <strong>게스트:</strong> <code>guest@company.com</code> / <code>guest</code>
                 </p>
-                
-                <div id="voc-alert"></div>
-                
-                <form id="voc-form">
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label">구분 *</label>
-                            <select class="form-select" id="voc-type" required>
-                                <option value="불만">불만 (제품/서비스 문제)</option>
-                                <option value="요청">요청 (새로운 기능)</option>
-                                <option value="개선제안">개선제안 (프로세스/문서)</option>
-                                <option value="기타">기타</option>
-                            </select>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label class="form-label">제품 모델 *</label>
-                            <input type="text" class="form-input" id="voc-product" required 
-                                   placeholder="예: AC-7KW-V1">
-                        </div>
-                    </div>
-                    
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label">카테고리 *</label>
-                            <select class="form-select" id="voc-category" required>
-                                <option value="펌웨어">펌웨어</option>
-                                <option value="APP">APP</option>
-                                <option value="하드웨어">하드웨어</option>
-                                <option value="기구">기구</option>
-                                <option value="문서">문서</option>
-                                <option value="서비스">서비스</option>
-                                <option value="기타">기타</option>
-                            </select>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label class="form-label">우선순위 *</label>
-                            <select class="form-select" id="voc-priority" required>
-                                <option value="높음">높음</option>
-                                <option value="보통" selected>보통</option>
-                                <option value="낮음">낮음</option>
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">제목 *</label>
-                        <input type="text" class="form-input" id="voc-title" required 
-                               placeholder="예: 충전 중 재부팅 발생">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">내용 *</label>
-                        <textarea class="form-textarea" id="voc-content" required 
-                                  placeholder="문제 상황이나 개선 아이디어를 자세히 작성해주세요"></textarea>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">첨부 파일 링크 (선택)</label>
-                        <input type="text" class="form-input" id="voc-file" 
-                               placeholder="Google Drive 링크 등">
-                    </div>
-                    
-                    <button type="submit" class="btn btn-success" style="width: 100%;">
-                        📤 VOC 제출하기
-                    </button>
-                </form>
-            </div>
-            
-            <!-- VOC 목록 -->
-            <div class="card">
-                <div class="card-title">VOC 목록</div>
-                <div id="voc-list">
-                    <div class="loading">VOC 데이터 로딩 중</div>
-                </div>
+                <small style="color: #856404;">⚠️ 실제 배포 시에는 이 부분을 삭제하세요</small>
             </div>
         </div>
         
-        <!-- 설정 페이지 -->
-        <div id="page-settings" class="page">
-            <div class="card">
-                <div class="card-title">⚙️ 시스템 설정</div>
-                <div id="settings-content">
-                    <p style="font-size: 17px; color: #666;">
-                        권한 관리 및 시스템 설정은 FULL_ACCESS 권한이 필요합니다.
-                    </p>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- 날짜 코드 입력 모달 -->
-    <div id="date-code-modal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">🔑 접근 인증</div>
-            <p style="font-size: 17px; margin-bottom: 20px;">
-                FULL_ACCESS 권한 사용을 위해 오늘의 날짜 코드를 입력하세요.
-            </p>
-            <div class="form-group">
-                <label class="form-label">날짜 코드 (4자리)</label>
-                <input type="text" class="form-input" id="date-code-input" 
-                       maxlength="4" placeholder="예: 0229" 
-                       style="text-align: center; font-size: 24px; letter-spacing: 4px;">
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-primary" onclick="verifyDateCode()">확인</button>
-            </div>
-            <p style="font-size: 14px; color: #666; margin-top: 15px; text-align: center;">
-                힌트: 월일 + 20 (예: 2월 9일 → 0229)
-            </p>
+        <!-- 로딩 화면 -->
+        <div id="loading-screen" class="loading hidden">
+            <div class="spinner"></div>
+            <p style="font-size: 18px; color: #666;">로그인 중...</p>
         </div>
     </div>
 
     <script>
         // ==========================================
-        // 전역 변수
+        // 🔧 Apps Script URL 설정
         // ==========================================
         
-        const USER_EMAIL = '<?= userEmail ?>';
-        const USER_PERMISSION = '<?= permission ?>';
-        const USER_NAME = '<?= userName ?>';
-        
-        let isDateCodeVerified = false;
-        let dashboardData = null;
+        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw3sHvCitPLibaxtTe2gAlG1I2VbPsHI_G5MS6LTaNMmiq8QHcCFjOk519a9-nDVKA/exec';
         
         // ==========================================
-        // 초기화
+        // 로그인 처리
         // ==========================================
         
-        document.addEventListener('DOMContentLoaded', function() {
-            initializeApp();
-        });
-        
-        function initializeApp() {
-            console.log('대시보드 초기화 중...');
-            console.log('사용자:', USER_NAME, '/', USER_EMAIL);
-            console.log('권한:', USER_PERMISSION);
+        async function handleLogin(event) {
+            event.preventDefault();
             
-            // 권한별 UI 조정
-            adjustUIByPermission();
+            const email = document.getElementById('email-input').value.trim();
+            const password = document.getElementById('password-input').value;
             
-            // FULL_ACCESS인 경우 날짜 코드 확인
-            if (USER_PERMISSION === 'FULL_ACCESS') {
-                showDateCodeModal();
-            } else {
-                // 다른 권한은 바로 데이터 로드
-                loadDashboardData();
-            }
-            
-            // 이벤트 리스너 등록
-            registerEventListeners();
-        }
-        
-        function adjustUIByPermission() {
-            if (USER_PERMISSION === 'DASHBOARD_ONLY') {
-                // 대시보드만 표시
-                document.getElementById('nav-projects').disabled = true;
-                document.getElementById('nav-interrupt').disabled = true;
-                document.getElementById('nav-assets').disabled = true;
-                document.getElementById('nav-settings').disabled = true;
-            } else if (USER_PERMISSION === 'READ_ONLY') {
-                // 프로젝트, 인터럽트 비활성화
-                document.getElementById('nav-projects').disabled = true;
-                document.getElementById('nav-settings').disabled = true;
-            }
-        }
-        
-        function registerEventListeners() {
-            // 인터럽트 폼
-            const interruptForm = document.getElementById('interrupt-form');
-            if (interruptForm) {
-                interruptForm.addEventListener('submit', handleInterruptSubmit);
-            }
-            
-            // VOC 폼
-            const vocForm = document.getElementById('voc-form');
-            if (vocForm) {
-                vocForm.addEventListener('submit', handleVOCSubmit);
-            }
-        }
-        
-        // ==========================================
-        // 페이지 전환
-        // ==========================================
-        
-        function showPage(pageName) {
-            // 모든 페이지 숨기기
-            document.querySelectorAll('.page').forEach(page => {
-                page.classList.remove('active');
-            });
-            
-            // 모든 버튼 비활성화
-            document.querySelectorAll('.nav-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            
-            // 선택한 페이지 표시
-            document.getElementById(`page-${pageName}`).classList.add('active');
-            
-            // 선택한 버튼 활성화
-            const activeBtn = document.getElementById(`nav-${pageName}`);
-            if (activeBtn) {
-                activeBtn.classList.add('active');
-            }
-            
-            // 페이지별 데이터 로드
-            loadPageData(pageName);
-        }
-        
-        function loadPageData(pageName) {
-            if (pageName === 'dashboard' && !dashboardData) {
-                loadDashboardData();
-            } else if (pageName === 'interrupt') {
-                loadInterruptData();
-            } else if (pageName === 'assets') {
-                loadAssetsData();
-            } else if (pageName === 'voc') {
-                loadVOCData();
-            } else if (pageName === 'projects') {
-                loadProjectsData();
-            }
-        }
-        
-        // ==========================================
-        // 날짜 코드 검증
-        // ==========================================
-        
-        function showDateCodeModal() {
-            document.getElementById('date-code-modal').classList.add('active');
-            document.getElementById('date-code-input').focus();
-        }
-        
-        function verifyDateCode() {
-            const code = document.getElementById('date-code-input').value;
-            
-            if (!code || code.length !== 4) {
-                alert('4자리 코드를 입력하세요');
+            if (!email || !password) {
+                showAlert('이메일과 비밀번호를 입력해주세요.', 'danger');
                 return;
             }
             
-            // Apps Script 호출하여 검증
-            google.script.run
-                .withSuccessHandler(function(result) {
-                    if (result.valid) {
-                        isDateCodeVerified = true;
-                        document.getElementById('date-code-modal').classList.remove('active');
-                        loadDashboardData();
-                    } else {
-                        alert('잘못된 코드입니다. 다시 시도하세요.');
-                        document.getElementById('date-code-input').value = '';
-                        document.getElementById('date-code-input').focus();
-                    }
-                })
-                .withFailureHandler(function(error) {
-                    console.error('코드 검증 실패:', error);
-                    alert('검증 중 오류가 발생했습니다');
-                })
-                .apiVerifyDateCode({code: code});
+            // 로딩 표시
+            document.getElementById('login-btn').disabled = true;
+            document.getElementById('login-btn').textContent = '로그인 중...';
+            
+            try {
+                // Apps Script 인증 API 호출
+                const response = await fetch(APPS_SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'cors',
+                    headers: {
+                        'Content-Type': 'text/plain',
+                    },
+                    body: JSON.stringify({
+                        action: 'authenticateUser',
+                        email: email,
+                        password: password
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // 로그인 성공
+                    showAlert('로그인 성공! 대시보드로 이동합니다...', 'success');
+                    
+                    // 세션 저장 (localStorage)
+                    const sessionData = {
+                        email: result.email,
+                        name: result.name,
+                        permission: result.permission,
+                        dept: result.dept,
+                        token: result.token,
+                        loginTime: new Date().getTime()
+                    };
+                    
+                    localStorage.setItem('lab_session', JSON.stringify(sessionData));
+                    
+                    // 대시보드로 리다이렉트
+                    setTimeout(() => {
+                        window.location.href = 'dashboard.html';
+                    }, 1000);
+                    
+                } else {
+                    // 로그인 실패
+                    showAlert(result.error || '로그인에 실패했습니다.', 'danger');
+                    document.getElementById('login-btn').disabled = false;
+                    document.getElementById('login-btn').textContent = '🔐 로그인';
+                }
+                
+            } catch (error) {
+                console.error('로그인 오류:', error);
+                showAlert('서버 연결에 실패했습니다. 잠시 후 다시 시도해주세요.', 'danger');
+                document.getElementById('login-btn').disabled = false;
+                document.getElementById('login-btn').textContent = '🔐 로그인';
+            }
         }
         
-        // 엔터키로 제출
-        document.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter' && document.getElementById('date-code-modal').classList.contains('active')) {
-                verifyDateCode();
+        // ==========================================
+        // 비밀번호 표시/숨김 토글
+        // ==========================================
+        
+        function togglePassword() {
+            const passwordInput = document.getElementById('password-input');
+            const toggleBtn = document.querySelector('.toggle-btn');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                toggleBtn.textContent = '🙈';
+            } else {
+                passwordInput.type = 'password';
+                toggleBtn.textContent = '👁️';
             }
+        }
+        
+        // ==========================================
+        // 유틸리티 함수
+        // ==========================================
+        
+        function showAlert(message, type = 'info') {
+            const container = document.getElementById('alert-container');
+            container.innerHTML = `
+                <div class="alert alert-${type}">
+                    ${message}
+                </div>
+            `;
+            
+            if (type !== 'success') {
+                setTimeout(() => {
+                    container.innerHTML = '';
+                }, 5000);
+            }
+        }
+        
+        // ==========================================
+        // 페이지 로드 시 세션 확인
+        // ==========================================
+        
+        window.addEventListener('DOMContentLoaded', function() {
+            const session = localStorage.getItem('lab_session');
+            
+            if (session) {
+                try {
+                    const sessionData = JSON.parse(session);
+                    const loginTime = sessionData.loginTime;
+                    const now = new Date().getTime();
+                    const hoursPassed = (now - loginTime) / (1000 * 60 * 60);
+                    
+                    // 8시간 이내면 자동 로그인
+                    if (hoursPassed < 8) {
+                        showAlert('이미 로그인되어 있습니다. 대시보드로 이동합니다...', 'info');
+                        setTimeout(() => {
+                            window.location.href = 'dashboard.html';
+                        }, 1000);
+                        return;
+                    } else {
+                        // 세션 만료
+                        localStorage.removeItem('lab_session');
+                        showAlert('세션이 만료되었습니다. 다시 로그인해주세요.', 'info');
+                    }
+                } catch (e) {
+                    localStorage.removeItem('lab_session');
+                }
+            }
+            
+            // 이메일 입력란에 포커스
+            document.getElementById('email-input').focus();
         });
         
-        // ==========================================
-        // 데이터 로딩 함수들
-        // ==========================================
-        
-        function loadDashboardData() {
-            google.script.run
-                .withSuccessHandler(function(data) {
-                    dashboardData = data;
-                    renderDashboard(data);
-                })
-                .withFailureHandler(function(error) {
-                    console.error('대시보드 로딩 실패:', error);
-                    showError('dashboard', '데이터를 불러오는데 실패했습니다');
-                })
-                .apiGetDashboardStats();
-        }
-        
-        function loadInterruptData() {
-            google.script.run
-                .withSuccessHandler(function(data) {
-                    renderInterruptLog(data);
-                })
-                .withFailureHandler(function(error) {
-                    console.error('인터럽트 로딩 실패:', error);
-                })
-                .apiGetInterrupts();
-        }
-        
-        function loadAssetsData() {
-            google.script.run
-                .withSuccessHandler(function(data) {
-                    renderAssets(data);
-                })
-                .withFailureHandler(function(error) {
-                    console.error('자산 로딩 실패:', error);
-                })
-                .apiGetBaselines();
-        }
-        
-        function loadVOCData() {
-            google.script.run
-                .withSuccessHandler(function(data) {
-                    renderVOCList(data);
-                })
-                .withFailureHandler(function(error) {
-                    console.error('VOC 로딩 실패:', error);
-                })
-                .apiGetVOCList();
-        }
-        
-        function loadProjectsData() {
-            google.script.run
-                .withSuccessHandler(function(data) {
-                    renderProjects(data);
-                })
-                .withFailureHandler(function(error) {
-                    console.error('프로젝트 로딩 실패:', error);
-                })
-                .apiGetProjects();
-        }
-        
-        // 계속...
+        // Enter 키로 로그인
+        document.getElementById('password-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                handleLogin(e);
+            }
+        });
     </script>
 </body>
 </html>
