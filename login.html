@@ -13,7 +13,7 @@
             justify-content: center;
             align-items: center;
             padding: 20px;
-            user-select: none; /* 전체 선택 방지 */
+            user-select: none;
         }
         
         .login-container {
@@ -28,7 +28,7 @@
         .logo {
             text-align: center;
             margin-bottom: 30px;
-            user-select: text; /* 로고는 선택 가능 */
+            user-select: text;
         }
         
         .logo h1 {
@@ -202,22 +202,21 @@
             </button>
         </form>
         
-        <!-- 개발/테스트용 - 실배포 시 삭제 -->
         <div class="demo-accounts">
             <h4>📌 테스트 계정</h4>
             <p style="margin-bottom: 10px;">
-                <strong>관리자:</strong> <code><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="a4c5c0c9cdcae4c7cbc9d4c5cadd8ac7cbc9">[email&#160;protected]</a></code> / <code>1234</code><br>
-                <strong>연구원:</strong> <code><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="3c5755517c5f53514c5d5245125f5351">[email&#160;protected]</a></code> / <code>1234</code><br>
-                <strong>타부서:</strong> <code><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="88f8fae7ecfdebfce1e7e6c8ebe7e5f8e9e6f1a6ebe7e5">[email&#160;protected]</a></code> / <code>prod1234</code><br>
-                <strong>게스트:</strong> <code><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="7e190b1b0d0a3e1d11130e1f1007501d1113">[email&#160;protected]</a></code> / <code>guest</code>
+                <strong>관리자:</strong> <code>admin@company.com</code> / <code>1234</code><br>
+                <strong>연구원:</strong> <code>kim@company.com</code> / <code>1234</code><br>
+                <strong>타부서:</strong> <code>production@company.com</code> / <code>prod1234</code><br>
+                <strong>게스트:</strong> <code>guest@company.com</code> / <code>guest</code>
             </p>
             <small style="color: #856404;">⚠️ 실제 배포 시에는 이 부분을 삭제하세요</small>
         </div>
     </div>
 
-    <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="js/auth.js"></script>
+    <script src="js/auth.js"></script>
     <script>
-        // 전역 복사/붙여넣기 방지 (추가 보안)
+        // 전역 복사/붙여넣기 방지
         document.addEventListener('copy', function(e) {
             if (e.target.tagName === 'INPUT') {
                 e.preventDefault();
@@ -239,7 +238,6 @@
             }
         });
         
-        // 우클릭 방지 (선택사항)
         document.addEventListener('contextmenu', function(e) {
             if (e.target.tagName === 'INPUT') {
                 e.preventDefault();
@@ -266,6 +264,8 @@
             const email = document.getElementById('email-input').value.trim();
             const password = document.getElementById('password-input').value;
             
+            console.log('로그인 시도:', email); // 디버깅용
+            
             if (!email || !password) {
                 showAlert('이메일과 비밀번호를 입력해주세요.', 'danger');
                 return;
@@ -277,6 +277,8 @@
             
             try {
                 const result = await authenticateUser(email, password);
+                
+                console.log('인증 결과:', result); // 디버깅용
                 
                 if (result.success) {
                     showAlert('로그인 성공! 대시보드로 이동합니다...', 'success');
@@ -292,8 +294,13 @@
                     
                     localStorage.setItem('lab_session', JSON.stringify(sessionData));
                     
+                    console.log('세션 저장 완료:', sessionData); // 디버깅용
+                    
+                    // 절대 경로로 리다이렉트
                     setTimeout(() => {
-                        window.location.href = 'dashboard.html';
+                        const currentPath = window.location.pathname;
+                        const basePath = currentPath.substring(0, currentPath.lastIndexOf('/'));
+                        window.location.href = basePath + '/dashboard.html';
                     }, 1000);
                     
                 } else {
@@ -304,7 +311,7 @@
                 
             } catch (error) {
                 console.error('로그인 오류:', error);
-                showAlert('서버 연결에 실패했습니다. 잠시 후 다시 시도해주세요.', 'danger');
+                showAlert('서버 연결에 실패했습니다. 다음을 확인하세요:<br>1. Apps Script URL이 올바른가요?<br>2. Google Sheets가 설정되었나요?<br>3. 브라우저 콘솔(F12)에서 상세 오류를 확인하세요.', 'danger');
                 loginBtn.disabled = false;
                 loginBtn.textContent = '🔐 로그인';
             }
@@ -329,6 +336,8 @@
         window.addEventListener('DOMContentLoaded', function() {
             const session = localStorage.getItem('lab_session');
             
+            console.log('기존 세션:', session); // 디버깅용
+            
             if (session) {
                 try {
                     const sessionData = JSON.parse(session);
@@ -339,3 +348,23 @@
                     if (hoursPassed < 8) {
                         showAlert('이미 로그인되어 있습니다. 대시보드로 이동합니다...', 'info');
                         setTimeout(() => {
+                            const currentPath = window.location.pathname;
+                            const basePath = currentPath.substring(0, currentPath.lastIndexOf('/'));
+                            window.location.href = basePath + '/dashboard.html';
+                        }, 1000);
+                        return;
+                    } else {
+                        localStorage.removeItem('lab_session');
+                        showAlert('세션이 만료되었습니다. 다시 로그인해주세요.', 'info');
+                    }
+                } catch (e) {
+                    console.error('세션 파싱 오류:', e);
+                    localStorage.removeItem('lab_session');
+                }
+            }
+            
+            document.getElementById('email-input').focus();
+        });
+    </script>
+</body>
+</html>
