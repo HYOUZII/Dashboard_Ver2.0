@@ -4,30 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>연구소 업무 관리 대시보드</title>
+    <link rel="stylesheet" href="css/styles.css">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        
-        :root {
-            --primary: #2c5aa0;
-            --secondary: #5b8fd9;
-            --success: #28a745;
-            --danger: #dc3545;
-            --warning: #ffc107;
-            --light-bg: #f8f9fa;
-        }
-        
         body {
-            font-family: 'Malgun Gothic', sans-serif;
-            font-size: 18px;
-            background-color: var(--light-bg);
             min-height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
         
         .header {
             background: linear-gradient(135deg, var(--primary), var(--secondary));
             color: white;
             padding: 20px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            box-shadow: var(--shadow);
         }
         
         .header-content {
@@ -38,9 +27,26 @@
             align-items: center;
         }
         
-        .header h1 { font-size: 28px; }
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 5px;
+        }
         
-        .user-info { text-align: right; font-size: 16px; }
+        .header-subtitle {
+            font-size: 16px;
+            opacity: 0.95;
+        }
+        
+        .user-info {
+            text-align: right;
+            font-size: 16px;
+        }
+        
+        .user-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
         .permission-badge {
             display: inline-block;
             padding: 4px 12px;
@@ -50,10 +56,25 @@
             margin-top: 5px;
         }
         
+        .logout-btn {
+            margin-top: 10px;
+            padding: 8px 16px;
+            font-size: 14px;
+            background: var(--danger);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        
+        .logout-btn:hover {
+            background: #c82333;
+        }
+        
         .nav-container {
             background: white;
             padding: 15px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            box-shadow: var(--shadow);
             position: sticky;
             top: 0;
             z-index: 100;
@@ -77,112 +98,58 @@
             border-radius: 10px;
             cursor: pointer;
             transition: all 0.3s;
+            min-height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
         }
         
         .nav-btn:hover:not(:disabled) {
             background: var(--primary);
             color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         }
         
-        .nav-btn.active { background: var(--primary); color: white; }
-        .nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
-        
-        .content { max-width: 1400px; margin: 30px auto; padding: 0 20px; }
-        
-        .page { display: none; }
-        .page.active { display: block; }
-        
-        .card {
-            background: white;
-            border-radius: 12px;
-            padding: 25px;
-            margin-bottom: 25px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        .nav-btn.active {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
         }
         
-        .card-title {
-            font-size: 24px;
-            font-weight: bold;
-            margin-bottom: 20px;
-            color: var(--primary);
-            border-bottom: 2px solid #dee2e6;
-            padding-bottom: 12px;
+        .nav-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
         }
         
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-        
-        .stat-card {
-            background: white;
-            border-radius: 12px;
-            padding: 25px;
-            text-align: center;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            border-top: 4px solid var(--primary);
-        }
-        
-        .stat-value {
-            font-size: 42px;
-            font-weight: bold;
-            color: var(--primary);
-            margin: 12px 0;
-        }
-        
-        .btn {
-            padding: 15px 30px;
-            font-size: 18px;
-            font-weight: bold;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        
-        .btn-primary { background: var(--primary); color: white; }
-        .btn-danger { background: var(--danger); color: white; }
-        
-        .btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
-        
-        .form-group { margin-bottom: 20px; }
-        .form-label {
-            display: block;
-            font-size: 18px;
-            font-weight: bold;
-            margin-bottom: 8px;
-        }
-        
-        .form-input, .form-select, .form-textarea {
+        .content-container {
+            flex: 1;
+            max-width: 1400px;
             width: 100%;
-            padding: 12px;
-            font-size: 17px;
-            border: 2px solid #dee2e6;
-            border-radius: 6px;
+            margin: 30px auto;
+            padding: 0 20px;
         }
         
-        .form-textarea { min-height: 100px; resize: vertical; }
-        
-        .hidden { display: none; }
-        
-        .loading {
-            text-align: center;
-            padding: 60px 20px;
-            font-size: 22px;
-            color: #666;
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease;
         }
         
-        .alert {
-            padding: 18px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            font-size: 17px;
+        .tab-content.active {
+            display: block;
         }
         
-        .alert-success { background: #d4edda; color: #155724; }
-        .alert-danger { background: #f8d7da; color: #721c24; }
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
         
         .permission-info {
             background: #fff3cd;
@@ -192,229 +159,126 @@
             margin-bottom: 20px;
         }
         
-        .permission-info h4 { margin-bottom: 10px; color: #856404; }
+        .permission-info h4 {
+            margin-bottom: 10px;
+            color: #856404;
+        }
+        
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 22px;
+            }
+            
+            .nav-btn {
+                font-size: 17px;
+                padding: 15px 10px;
+                min-height: 60px;
+            }
+        }
     </style>
 </head>
 <body>
+    <!-- 헤더 -->
     <div class="header">
         <div class="header-content">
             <div>
                 <h1>🔬 연구소 업무 관리 대시보드</h1>
-                <p style="font-size: 16px; opacity: 0.95;">실시간 업무 가시성 & 인터럽트 관리</p>
+                <p class="header-subtitle">실시간 업무 가시성 & 인터럽트 관리</p>
             </div>
             <div class="user-info">
-                <div id="user-name-display">로딩 중...</div>
+                <div class="user-name" id="user-name-display">로딩 중...</div>
                 <div class="permission-badge" id="permission-display">-</div>
-                <button class="btn btn-danger" onclick="logout()" style="margin-top: 10px; padding: 8px 16px; font-size: 14px;">
-                    로그아웃
-                </button>
+                <button class="logout-btn" onclick="logout()">로그아웃</button>
             </div>
         </div>
     </div>
     
+    <!-- 네비게이션 -->
     <div class="nav-container">
         <div class="nav-buttons">
-            <button class="nav-btn active" onclick="showPage('dashboard')" id="nav-dashboard">📊 대시보드</button>
-            <button class="nav-btn" onclick="showPage('projects')" id="nav-projects">📋 프로젝트</button>
-            <button class="nav-btn" onclick="showPage('interrupt')" id="nav-interrupt">⚡ 인터럽트</button>
-            <button class="nav-btn" onclick="showPage('assets')" id="nav-assets">📁 자산</button>
-            <button class="nav-btn" onclick="showPage('voc')" id="nav-voc">💬 VOC</button>
-            <button class="nav-btn" onclick="showPage('settings')" id="nav-settings">⚙️ 설정</button>
+            <button class="nav-btn active" onclick="switchTab('dashboard')" id="nav-dashboard">
+                📊 대시보드
+            </button>
+            <button class="nav-btn" onclick="switchTab('projects')" id="nav-projects">
+                📋 프로젝트
+            </button>
+            <button class="nav-btn" onclick="switchTab('interrupt')" id="nav-interrupt">
+                ⚡ 인터럽트
+            </button>
+            <button class="nav-btn" onclick="switchTab('assets')" id="nav-assets">
+                📁 자산
+            </button>
+            <button class="nav-btn" onclick="switchTab('voc')" id="nav-voc">
+                💬 VOC
+            </button>
+            <button class="nav-btn" onclick="switchTab('settings')" id="nav-settings">
+                ⚙️ 설정
+            </button>
         </div>
     </div>
     
-    <div class="content">
-        <!-- 대시보드 페이지 -->
-        <div id="page-dashboard" class="page active">
-            <div id="permission-notice"></div>
-            
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div>진행중인 프로젝트</div>
-                    <div class="stat-value" id="stat-projects">-</div>
-                    <div>개</div>
-                </div>
-                <div class="stat-card">
-                    <div>이번 주 인터럽트</div>
-                    <div class="stat-value" id="stat-interrupts">-</div>
-                    <div>건</div>
-                </div>
-                <div class="stat-card">
-                    <div>팀원 수</div>
-                    <div class="stat-value" id="stat-members">-</div>
-                    <div>명</div>
-                </div>
-            </div>
-            
-            <div class="card">
-                <div class="card-title">환영합니다!</div>
-                <p id="welcome-message">대시보드를 로딩하고 있습니다...</p>
-            </div>
-        </div>
+    <!-- 콘텐츠 영역 -->
+    <div class="content-container">
+        <!-- 대시보드 탭 -->
+        <div id="tab-dashboard" class="tab-content active"></div>
         
-        <!-- VOC 페이지 -->
-        <div id="page-voc" class="page">
-            <div class="card">
-                <div class="card-title">💬 VOC 등록</div>
-                <div id="voc-permission-notice"></div>
-                <div id="voc-alert"></div>
-                
-                <form id="voc-form" onsubmit="handleVOCSubmit(event)">
-                    <div class="form-group">
-                        <label class="form-label">구분 *</label>
-                        <select class="form-select" id="voc-type" required>
-                            <option value="불만">불만 (제품/서비스 문제)</option>
-                            <option value="요청">요청 (새로운 기능)</option>
-                            <option value="개선제안">개선제안 (프로세스/문서)</option>
-                            <option value="기타">기타</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">제품 모델 *</label>
-                        <input type="text" class="form-input" id="voc-product" required placeholder="예: AC-7KW-V1">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">카테고리 *</label>
-                        <select class="form-select" id="voc-category" required>
-                            <option value="펌웨어">펌웨어</option>
-                            <option value="APP">APP</option>
-                            <option value="하드웨어">하드웨어</option>
-                            <option value="기구">기구</option>
-                            <option value="문서">문서</option>
-                            <option value="기타">기타</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">제목 *</label>
-                        <input type="text" class="form-input" id="voc-title" required placeholder="예: 충전 중 재부팅 발생">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">내용 *</label>
-                        <textarea class="form-textarea" id="voc-content" required placeholder="문제 상황이나 개선 아이디어를 자세히 작성해주세요"></textarea>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">우선순위 *</label>
-                        <select class="form-select" id="voc-priority" required>
-                            <option value="높음">높음</option>
-                            <option value="보통" selected>보통</option>
-                            <option value="낮음">낮음</option>
-                        </select>
-                    </div>
-                    
-                    <button type="submit" class="btn btn-primary" style="width: 100%;">📤 VOC 제출</button>
-                </form>
-            </div>
-            
-            <div class="card">
-                <div class="card-title">VOC 목록</div>
-                <div id="voc-list" class="loading">VOC 데이터 로딩 중...</div>
-            </div>
-        </div>
+        <!-- 프로젝트 탭 -->
+        <div id="tab-projects" class="tab-content"></div>
         
-        <!-- 기타 페이지들 (간략 버전) -->
-        <div id="page-projects" class="page">
-            <div class="card">
-                <div class="card-title">📋 프로젝트 관리</div>
-                <div id="projects-permission-notice"></div>
-                <p>프로젝트 목록이 여기에 표시됩니다.</p>
-            </div>
-        </div>
+        <!-- 인터럽트 탭 -->
+        <div id="tab-interrupt" class="tab-content"></div>
         
-        <div id="page-interrupt" class="page">
-            <div class="card">
-                <div class="card-title">⚡ 인터럽트 등록</div>
-                <div id="interrupt-permission-notice"></div>
-                <p>인터럽트 등록 폼이 여기에 표시됩니다.</p>
-            </div>
-        </div>
+        <!-- 자산 탭 -->
+        <div id="tab-assets" class="tab-content"></div>
         
-        <div id="page-assets" class="page">
-            <div class="card">
-                <div class="card-title">📁 베이스라인 & 자산</div>
-                <p>베이스라인 목록이 여기에 표시됩니다.</p>
-            </div>
-        </div>
+        <!-- VOC 탭 -->
+        <div id="tab-voc" class="tab-content"></div>
         
-        <div id="page-settings" class="page">
-            <div class="card">
-                <div class="card-title">⚙️ 설정</div>
-                <div id="settings-permission-notice"></div>
-                <p>관리자 전용 설정 페이지입니다.</p>
-            </div>
-        </div>
+        <!-- 설정 탭 -->
+        <div id="tab-settings" class="tab-content"></div>
     </div>
 
+    <!-- 공통 스크립트 -->
+    <script src="js/auth.js"></script>
+    <script src="js/api.js"></script>
+    
+    <!-- 탭별 스크립트 -->
+    <script src="js/dashboard.js"></script>
+    <script src="js/projects.js"></script>
+    <script src="js/interrupt.js"></script>
+    <script src="js/assets.js"></script>
+    <script src="js/voc.js"></script>
+    <script src="js/settings.js"></script>
+    
     <script>
-        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz7nfZPBXS_z_V5_PixoGS49q_mcMZNPmKlLyMBYWzhJLDP5NYUniXMaUv1nS8RArk/exec';
-        
+        // 전역 변수
+        let currentTab = 'dashboard';
         let SESSION = null;
         
-        // 페이지 로드 시 세션 확인
+        // 페이지 로드
         window.addEventListener('DOMContentLoaded', function() {
-            checkSession();
+            // 세션 확인
+            SESSION = requireSession();
+            
+            if (!SESSION) {
+                return; // requireSession()이 자동으로 로그인 페이지로 리다이렉트
+            }
+            
+            // 사용자 정보 표시
+            document.getElementById('user-name-display').textContent = 
+                `${SESSION.name} (${SESSION.email})`;
+            document.getElementById('permission-display').textContent = SESSION.permission;
+            
+            // 권한별 UI 조정
+            adjustUIByPermission();
+            
+            // 초기 탭 로드
+            loadTab('dashboard');
         });
         
-        function checkSession() {
-            const sessionStr = localStorage.getItem('lab_session');
-            
-            if (!sessionStr) {
-                window.location.href = 'login.html';
-                return;
-            }
-            
-            try {
-                SESSION = JSON.parse(sessionStr);
-                
-                // 세션 만료 확인 (8시간)
-                const loginTime = SESSION.loginTime;
-                const now = new Date().getTime();
-                const hoursPassed = (now - loginTime) / (1000 * 60 * 60);
-                
-                if (hoursPassed > 8) {
-                    alert('세션이 만료되었습니다. 다시 로그인해주세요.');
-                    logout();
-                    return;
-                }
-                
-                // UI 업데이트
-                document.getElementById('user-name-display').textContent = SESSION.name + ' (' + SESSION.email + ')';
-                document.getElementById('permission-display').textContent = SESSION.permission;
-                
-                // 권한별 UI 조정
-                adjustUIByPermission();
-                
-                // 데이터 로드
-                loadDashboardData();
-                loadVOCData();
-                
-            } catch (error) {
-                console.error('세션 오류:', error);
-                logout();
-            }
-        }
-        
+        // 권한별 UI 조정
         function adjustUIByPermission() {
             const permission = SESSION.permission;
-            
-            // 권한별 안내 메시지
-            const notices = {
-                'GUEST': '게스트 권한입니다. 조회만 가능합니다.',
-                'EXTERNAL': '타 부서 권한입니다. VOC 작성, 파일 다운로드, 인터럽트 등록이 가능합니다.',
-                'RESEARCHER': '연구원 권한입니다. 대부분의 기능을 사용할 수 있습니다.',
-                'ADMIN': '관리자 권한입니다. 모든 기능을 사용할 수 있습니다.'
-            };
-            
-            document.getElementById('permission-notice').innerHTML = `
-                <div class="permission-info">
-                    <h4>🔑 ${permission}</h4>
-                    <p>${notices[permission]}</p>
-                </div>
-            `;
             
             // GUEST: 대부분 비활성화
             if (permission === 'GUEST') {
@@ -422,129 +286,125 @@
                 document.getElementById('nav-interrupt').disabled = true;
                 document.getElementById('nav-voc').disabled = true;
                 document.getElementById('nav-settings').disabled = true;
-                
-                document.getElementById('voc-permission-notice').innerHTML = `
-                    <div class="alert alert-danger">게스트는 VOC 작성이 불가능합니다.</div>
-                `;
-                document.getElementById('voc-form').style.display = 'none';
             }
-            
             // EXTERNAL: 프로젝트, 설정 비활성화
             else if (permission === 'EXTERNAL') {
                 document.getElementById('nav-projects').disabled = true;
                 document.getElementById('nav-settings').disabled = true;
             }
-            
             // RESEARCHER: 설정만 비활성화
             else if (permission === 'RESEARCHER') {
                 document.getElementById('nav-settings').disabled = true;
             }
-            
-            // ADMIN: 모두 가능 (아무것도 비활성화 안 함)
+            // ADMIN: 모두 활성화
         }
         
-        async function callAPI(action, params = {}) {
-            try {
-                const response = await fetch(APPS_SCRIPT_URL, {
-                    method: 'POST',
-                    mode: 'cors',
-                    headers: { 'Content-Type': 'text/plain' },
-                    body: JSON.stringify({
-                        action: action,
-                        sessionToken: SESSION.token,
-                        ...params
-                    })
-                });
-                
-                const result = await response.json();
-                
-                if (result.requireLogin) {
-                    alert('세션이 만료되었습니다. 다시 로그인해주세요.');
-                    logout();
-                    return null;
+        // 탭 전환
+        function switchTab(tabName) {
+            // 이전 탭 비활성화
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // 새 탭 활성화
+            document.getElementById(`tab-${tabName}`).classList.add('active');
+            document.getElementById(`nav-${tabName}`).classList.add('active');
+            
+            // 탭 로드
+            currentTab = tabName;
+            loadTab(tabName);
+        }
+        
+        // 탭 로드
+        function loadTab(tabName) {
+            const container = document.getElementById(`tab-${tabName}`);
+            
+            // 이미 로드됨
+            if (container.dataset.loaded === 'true') {
+                // 탭별 리프레시 함수가 있으면 호출
+                const refreshFn = window[`refresh${capitalize(tabName)}Tab`];
+                if (typeof refreshFn === 'function') {
+                    refreshFn();
                 }
-                
-                return result;
-            } catch (error) {
-                console.error('API 호출 실패:', error);
-                return null;
+                return;
+            }
+            
+            // 탭별 초기화 함수 호출
+            const initFn = window[`init${capitalize(tabName)}Tab`];
+            if (typeof initFn === 'function') {
+                initFn(container);
+                container.dataset.loaded = 'true';
+            } else {
+                container.innerHTML = `
+                    <div class="card">
+                        <div class="card-title">${getTabTitle(tabName)}</div>
+                        <div class="loading">로딩 중...</div>
+                    </div>
+                `;
             }
         }
         
-        async function loadDashboardData() {
-            const stats = await callAPI('getDashboardStats');
-            
-            if (stats) {
-                document.getElementById('stat-projects').textContent = stats.projects.active;
-                document.getElementById('stat-interrupts').textContent = stats.interrupts.thisWeek;
-                document.getElementById('stat-members').textContent = stats.members.total;
-                
-                document.getElementById('welcome-message').textContent = 
-                    `${SESSION.name}님, 환영합니다! 현재 ${stats.projects.active}개의 프로젝트가 진행 중입니다.`;
-            }
+        // 헬퍼 함수
+        function capitalize(str) {
+            return str.charAt(0).toUpperCase() + str.slice(1);
         }
         
-        async function loadVOCData() {
-            const vocList = await callAPI('getVOCList');
-            
-            if (vocList && Array.isArray(vocList)) {
-                const container = document.getElementById('voc-list');
-                
-                if (vocList.length === 0) {
-                    container.innerHTML = '<p>등록된 VOC가 없습니다.</p>';
-                    return;
-                }
-                
-                let html = '<table style="width: 100%; border-collapse: collapse;"><tr style="background: #2c5aa0; color: white;"><th style="padding: 12px;">번호</th><th>제목</th><th>작성자</th><th>상태</th><th>작성일</th></tr>';
-                
-                vocList.forEach(voc => {
-                    html += `<tr style="border-bottom: 1px solid #dee2e6;"><td style="padding: 12px;">${voc.VOC_ID}</td><td>${voc['제목']}</td><td>${voc['작성자']}</td><td>${voc['상태']}</td><td>${voc['작성일']}</td></tr>`;
-                });
-                
-                html += '</table>';
-                container.innerHTML = html;
-            }
+        function getTabTitle(tabName) {
+            const titles = {
+                dashboard: '📊 대시보드',
+                projects: '📋 프로젝트 관리',
+                interrupt: '⚡ 인터럽트 관리',
+                assets: '📁 베이스라인 & 자산',
+                voc: '💬 VOC (고객의 소리)',
+                settings: '⚙️ 시스템 설정'
+            };
+            return titles[tabName] || tabName;
         }
         
-        async function handleVOCSubmit(event) {
-            event.preventDefault();
-            
-            const vocData = {
-                type: document.getElementById('voc-type').value,
-                product: document.getElementById('voc-product').value,
-                category: document.getElementById('voc-category').value,
-                title: document.getElementById('voc-title').value,
-                content: document.getElementById('voc-content').value,
-                priority: document.getElementById('voc-priority').value,
-                authorDept: SESSION.dept
+        // 권한 확인 UI 표시
+        function showPermissionInfo(container, permission) {
+            const notices = {
+                'GUEST': '게스트 권한입니다. 조회만 가능합니다.',
+                'EXTERNAL': '타 부서 권한입니다. VOC 작성, 파일 다운로드, 인터럽트 등록이 가능합니다.',
+                'RESEARCHER': '연구원 권한입니다. 대부분의 기능을 사용할 수 있습니다.',
+                'ADMIN': '관리자 권한입니다. 모든 기능을 사용할 수 있습니다.'
             };
             
-            const result = await callAPI('addVOC', vocData);
+            const permissionInfo = document.createElement('div');
+            permissionInfo.className = 'permission-info';
+            permissionInfo.innerHTML = `
+                <h4>🔑 ${permission}</h4>
+                <p>${notices[permission]}</p>
+            `;
             
-            if (result && result.success) {
-                document.getElementById('voc-alert').innerHTML = `
-                    <div class="alert alert-success">${result.message} (${result.id})</div>
-                `;
-                document.getElementById('voc-form').reset();
-                loadVOCData();
-            } else {
-                document.getElementById('voc-alert').innerHTML = `
-                    <div class="alert alert-danger">${result.error || 'VOC 등록에 실패했습니다.'}</div>
-                `;
-            }
+            container.insertBefore(permissionInfo, container.firstChild);
         }
         
-        function showPage(pageName) {
-            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-            
-            document.getElementById(`page-${pageName}`).classList.add('active');
-            document.getElementById(`nav-${pageName}`).classList.add('active');
+        // 에러 표시
+        function showError(container, message) {
+            container.innerHTML = `
+                <div class="card">
+                    <div class="alert alert-danger">
+                        <strong>오류:</strong> ${message}
+                    </div>
+                </div>
+            `;
         }
         
-        function logout() {
-            localStorage.removeItem('lab_session');
-            window.location.href = 'login.html';
+        // 성공 메시지
+        function showSuccess(container, message) {
+            const alert = document.createElement('div');
+            alert.className = 'alert alert-success';
+            alert.textContent = message;
+            
+            container.insertBefore(alert, container.firstChild);
+            
+            setTimeout(() => {
+                alert.remove();
+            }, 5000);
         }
     </script>
 </body>
