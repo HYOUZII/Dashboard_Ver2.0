@@ -1,6 +1,6 @@
 // 인터럽트 탭 관리 - 완전판
 
-let teamMembers = [
+const teamMembers = [
     { id: 'M001', name: '김하드', role: 'HW' },
     { id: 'M002', name: '이펌웨', role: 'FW' },
     { id: 'M003', name: '박펌웨', role: 'FW' },
@@ -8,6 +8,12 @@ let teamMembers = [
     { id: 'M005', name: '정큐에', role: 'QA' },
     { id: 'M006', name: '신소프', role: 'SW' }
 ];
+
+// 담당자 ID를 이름으로 변환
+function getMemberName(memberId) {
+    const member = teamMembers.find(m => m.id === memberId);
+    return member ? `${member.name} (${member.role})` : memberId;
+}
 
 async function initInterruptTab(container) {
     const canAdd = SESSION.permission !== 'GUEST';
@@ -129,10 +135,7 @@ async function initInterruptTab(container) {
                     📝 등록
                 </button>
                 <button class="interrupt-tab" onclick="switchInterruptTab('list')">
-                    📋 목록
-                </button>
-                <button class="interrupt-tab" onclick="switchInterruptTab('stats')">
-                    📊 통계
+                    📋 목록 & 이력
                 </button>
             </div>
             
@@ -232,13 +235,6 @@ async function initInterruptTab(container) {
                     인터럽트 목록 로딩 중...
                 </div>
             </div>
-            
-            <!-- 통계 탭 -->
-            <div id="interrupt-tab-stats" class="tab-panel">
-                <div id="interrupt-stats-container" class="loading">
-                    통계 데이터 계산 중...
-                </div>
-            </div>
         </div>
     `;
     
@@ -279,11 +275,9 @@ function switchInterruptTab(tabName) {
     });
     document.getElementById(`interrupt-tab-${tabName}`).classList.add('active');
     
-    // 데이터 로드
+    // 목록 탭일 때 데이터 로드
     if (tabName === 'list') {
         loadInterruptList();
-    } else if (tabName === 'stats') {
-        loadInterruptStats();
     }
 }
 
@@ -391,7 +385,7 @@ async function loadInterruptList() {
                 <tr>
                     <td>${item['날짜'] || '-'}</td>
                     <td>${item['시간'] || '-'}</td>
-                    <td>${item['담당자ID'] || '-'}</td>
+                    <td><strong>${getMemberName(item['담당자ID'])}</strong></td>
                     <td>${item['요청부서'] || '-'}</td>
                     <td>${item['요청자'] || '-'}</td>
                     <td style="max-width: 300px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
@@ -417,129 +411,6 @@ async function loadInterruptList() {
     } catch (error) {
         console.error('목록 로딩 오류:', error);
         container.innerHTML = '<div class="alert alert-danger">데이터 로딩 실패</div>';
-    }
-}
-
-async function loadInterruptStats() {
-    const container = document.getElementById('interrupt-stats-container');
-    container.innerHTML = '<div class="loading">통계 계산 중...</div>';
-    
-    try {
-        const interrupts = await getInterrupts();
-        
-        if (!interrupts || interrupts.length === 0) {
-            container.innerHTML = '<p>통계 데이터가 없습니다.</p>';
-            return;
-        }
-        
-        // 통계 계산
-        const totalHours = interrupts.reduce((sum, item) => 
-            sum + (parseFloat(item['예상소요시간']) || 0), 0);
-        const avgHours = (totalHours / interrupts.length).toFixed(1);
-        
-        // 부서별 집계
-        const deptStats = {};
-        interrupts.forEach(item => {
-            const dept = item['요청부서'] || '기타';
-            if (!deptStats[dept]) {
-                deptStats[dept] = { count: 0, hours: 0 };
-            }
-            deptStats[dept].count++;
-            deptStats[dept].hours += parseFloat(item['예상소요시간']) || 0;
-        });
-        
-        // 담당자별 집계
-        const memberStats = {};
-        interrupts.forEach(item => {
-            const member = item['담당자ID'] || '미정';
-            if (!memberStats[member]) {
-                memberStats[member] = { count: 0, hours: 0 };
-            }
-            memberStats[member].count++;
-            memberStats[member].hours += parseFloat(item['예상소요시간']) || 0;
-        });
-        
-        let html = `
-            <div class="stats-cards">
-                <div class="stat-card-large">
-                    <div style="font-size: 14px; opacity: 0.9; margin-bottom: 10px;">총 인터럽트</div>
-                    <div style="font-size: 48px; font-weight: bold;">${interrupts.length}</div>
-                    <div style="font-size: 14px; opacity: 0.9; margin-top: 5px;">건</div>
-                </div>
-                
-                <div class="stat-card-large warning">
-                    <div style="font-size: 14px; opacity: 0.9; margin-bottom: 10px;">총 손실 시간</div>
-                    <div style="font-size: 48px; font-weight: bold;">${totalHours.toFixed(1)}</div>
-                    <div style="font-size: 14px; opacity: 0.9; margin-top: 5px;">시간</div>
-                </div>
-                
-                <div class="stat-card-large success">
-                    <div style="font-size: 14px; opacity: 0.9; margin-bottom: 10px;">평균 소요 시간</div>
-                    <div style="font-size: 48px; font-weight: bold;">${avgHours}</div>
-                    <div style="font-size: 14px; opacity: 0.9; margin-top: 5px;">시간/건</div>
-                </div>
-            </div>
-            
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-top: 25px;">
-                <div class="card" style="box-shadow: none; border: 2px solid #dee2e6;">
-                    <h4 style="margin-bottom: 15px;">부서별 인터럽트</h4>
-                    <table style="width: 100%;">
-                        <tr style="background: #f8f9fa; font-weight: bold;">
-                            <td style="padding: 10px;">부서</td>
-                            <td style="padding: 10px; text-align: right;">건수</td>
-                            <td style="padding: 10px; text-align: right;">시간</td>
-                        </tr>
-        `;
-        
-        Object.entries(deptStats)
-            .sort((a, b) => b[1].count - a[1].count)
-            .forEach(([dept, stat]) => {
-                html += `
-                    <tr>
-                        <td style="padding: 10px;"><strong>${dept}</strong></td>
-                        <td style="padding: 10px; text-align: right;">${stat.count}건</td>
-                        <td style="padding: 10px; text-align: right;">${stat.hours.toFixed(1)}h</td>
-                    </tr>
-                `;
-            });
-        
-        html += `
-                    </table>
-                </div>
-                
-                <div class="card" style="box-shadow: none; border: 2px solid #dee2e6;">
-                    <h4 style="margin-bottom: 15px;">담당자별 인터럽트</h4>
-                    <table style="width: 100%;">
-                        <tr style="background: #f8f9fa; font-weight: bold;">
-                            <td style="padding: 10px;">담당자</td>
-                            <td style="padding: 10px; text-align: right;">건수</td>
-                            <td style="padding: 10px; text-align: right;">시간</td>
-                        </tr>
-        `;
-        
-        Object.entries(memberStats)
-            .sort((a, b) => b[1].count - a[1].count)
-            .forEach(([member, stat]) => {
-                html += `
-                    <tr>
-                        <td style="padding: 10px;"><strong>${member}</strong></td>
-                        <td style="padding: 10px; text-align: right;">${stat.count}건</td>
-                        <td style="padding: 10px; text-align: right;">${stat.hours.toFixed(1)}h</td>
-                    </tr>
-                `;
-            });
-        
-        html += `
-                    </table>
-                </div>
-            </div>
-        `;
-        
-        container.innerHTML = html;
-        
-    } catch (error) {
-        console.error('통계 로딩 오류:', error);
-        container.innerHTML = '<div class="alert alert-danger">통계 계산 실패</div>';
     }
 }
 
