@@ -1,4 +1,4 @@
-// 인터럽트 탭 관리 - 완전판
+// 인터럽트 탭 - 중복 등록 방지 + 날짜 형식 통일
 
 const teamMembers = [
     { id: 'M001', name: '김하드', role: 'HW' },
@@ -9,10 +9,23 @@ const teamMembers = [
     { id: 'M006', name: '신소프', role: 'SW' }
 ];
 
-// 담당자 ID를 이름으로 변환
 function getMemberName(memberId) {
     const member = teamMembers.find(m => m.id === memberId);
     return member ? `${member.name} (${member.role})` : memberId;
+}
+
+// 날짜 포맷 함수
+function formatDateTime(dateStr, timeStr) {
+    if (!dateStr) return '-';
+    const date = new Date(dateStr);
+    const year = date.getFullYear().toString().slice(2);
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    
+    if (timeStr) {
+        return `${year}-${month}-${day} ${timeStr}`;
+    }
+    return `${month}/${day}`;
 }
 
 async function initInterruptTab(container) {
@@ -54,29 +67,6 @@ async function initInterruptTab(container) {
             
             .tab-panel.active {
                 display: block;
-            }
-            
-            .stats-cards {
-                display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-                gap: 20px;
-                margin-bottom: 25px;
-            }
-            
-            .stat-card-large {
-                background: linear-gradient(135deg, #667eea, #764ba2);
-                color: white;
-                padding: 25px;
-                border-radius: 12px;
-                text-align: center;
-            }
-            
-            .stat-card-large.warning {
-                background: linear-gradient(135deg, #f093fb, #f5576c);
-            }
-            
-            .stat-card-large.success {
-                background: linear-gradient(135deg, #4facfe, #00f2fe);
             }
             
             .interrupt-table {
@@ -144,13 +134,13 @@ async function initInterruptTab(container) {
                 ${canAdd ? `
                 <div id="interrupt-alert"></div>
                 
-                <form id="interrupt-form" onsubmit="handleInterruptSubmit(event)">
+                <form id="interrupt-form">
                     <div class="form-row">
                         <div class="form-group">
                             <label class="form-label">담당자 *</label>
                             <select class="form-select" id="interrupt-member" required>
                                 <option value="">선택하세요</option>
-                                ${generateMemberOptions()}
+                                ${teamMembers.map(m => `<option value="${m.id}">${m.name} (${m.role})</option>`).join('')}
                             </select>
                         </div>
                         
@@ -238,7 +228,6 @@ async function initInterruptTab(container) {
         </div>
     `;
     
-    // 기본 날짜 설정 (최근 30일)
     const today = new Date();
     const thirtyDaysAgo = new Date(today);
     thirtyDaysAgo.setDate(today.getDate() - 30);
@@ -249,33 +238,24 @@ async function initInterruptTab(container) {
     if (endDateInput) endDateInput.valueAsDate = today;
     if (startDateInput) startDateInput.valueAsDate = thirtyDaysAgo;
     
-    // 폼 이벤트
+    // 폼 이벤트 - 중복 방지
     const form = document.getElementById('interrupt-form');
     if (form) {
-        form.addEventListener('submit', handleInterruptSubmit);
+        form.onsubmit = handleInterruptSubmit; // ✅ onsubmit으로 직접 할당 (중복 방지)
     }
 }
 
-function generateMemberOptions() {
-    return teamMembers.map(m => 
-        `<option value="${m.id}">${m.name} (${m.role})</option>`
-    ).join('');
-}
-
 function switchInterruptTab(tabName) {
-    // 탭 버튼 전환
     document.querySelectorAll('.interrupt-tab').forEach(tab => {
         tab.classList.remove('active');
     });
     event.target.classList.add('active');
     
-    // 패널 전환
     document.querySelectorAll('.tab-panel').forEach(panel => {
         panel.classList.remove('active');
     });
     document.getElementById(`interrupt-tab-${tabName}`).classList.add('active');
     
-    // 목록 탭일 때 데이터 로드
     if (tabName === 'list') {
         loadInterruptList();
     }
@@ -286,6 +266,9 @@ async function handleInterruptSubmit(event) {
     
     const submitBtn = document.getElementById('interrupt-submit-btn');
     const alertDiv = document.getElementById('interrupt-alert');
+    
+    // 중복 제출 방지
+    if (submitBtn.disabled) return;
     
     submitBtn.disabled = true;
     submitBtn.textContent = '등록 중...';
@@ -346,7 +329,6 @@ async function loadInterruptList() {
             return;
         }
         
-        // 날짜 필터링
         const startDate = new Date(document.getElementById('start-date').value);
         const endDate = new Date(document.getElementById('end-date').value);
         
@@ -365,8 +347,7 @@ async function loadInterruptList() {
                 <table class="interrupt-table">
                     <thead>
                         <tr>
-                            <th>날짜</th>
-                            <th>시간</th>
+                            <th>날짜/시간</th>
                             <th>담당자</th>
                             <th>요청부서</th>
                             <th>요청자</th>
@@ -383,8 +364,7 @@ async function loadInterruptList() {
         filtered.forEach(item => {
             html += `
                 <tr>
-                    <td>${item['날짜'] || '-'}</td>
-                    <td>${item['시간'] || '-'}</td>
+                    <td>${formatDateTime(item['날짜'], item['시간'])}</td>
                     <td><strong>${getMemberName(item['담당자ID'])}</strong></td>
                     <td>${item['요청부서'] || '-'}</td>
                     <td>${item['요청자'] || '-'}</td>
@@ -395,7 +375,7 @@ async function loadInterruptList() {
                     <td><span class="badge ${getPriorityClass(item['긴급도'])}">${item['긴급도'] || '-'}</span></td>
                     <td>${item['예상소요시간'] || 0}h</td>
                     <td>
-                        <select class="status-select" onchange="updateInterruptStatus(this, '${item['인터럽트ID']}')">
+                        <select class="status-select" onchange="updateInterruptStatus(this, '${item['InterruptID']}')">
                             <option value="진행중" ${item['상태'] === '진행중' ? 'selected' : ''}>진행중</option>
                             <option value="완료" ${item['상태'] === '완료' ? 'selected' : ''}>완료</option>
                             <option value="보류" ${item['상태'] === '보류' ? 'selected' : ''}>보류</option>
@@ -436,7 +416,7 @@ async function updateInterruptStatus(selectElement, interruptId) {
             console.log('상태 업데이트 성공');
         } else {
             alert('상태 업데이트에 실패했습니다.');
-            loadInterruptList(); // 재로드
+            loadInterruptList();
         }
     } catch (error) {
         console.error('상태 업데이트 오류:', error);
