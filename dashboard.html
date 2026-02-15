@@ -1,458 +1,135 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>연구소 업무 관리 대시보드</title>
-    <link rel="stylesheet" href="css/styles.css">
-    <style>
-        body {
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-        
-        .header {
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            color: white;
-            padding: 20px;
-            box-shadow: var(--shadow);
-        }
-        
-        .header-content {
-            max-width: 1400px;
-            margin: 0 auto;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .header h1 {
-            font-size: 28px;
-            margin-bottom: 5px;
-        }
-        
-        .header-subtitle {
-            font-size: 16px;
-            opacity: 0.95;
-        }
-        
-        .user-info {
-            text-align: right;
-            font-size: 16px;
-        }
-        
-        .user-name {
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-        
-        .permission-badge {
-            display: inline-block;
-            padding: 6px 16px;
-            border-radius: 20px;
-            background: rgba(255,255,255,0.3);
-            font-size: 14px;
-            margin-top: 5px;
-            cursor: pointer;
-            transition: all 0.3s;
-            border: 2px solid rgba(255,255,255,0.5);
-        }
-        
-        .permission-badge:hover {
-            background: rgba(255,255,255,0.4);
-            border-color: rgba(255,255,255,0.8);
-            transform: scale(1.05);
-        }
-        
-        .logout-btn {
-            margin-top: 10px;
-            padding: 8px 16px;
-            font-size: 14px;
-            background: var(--danger);
-            color: white;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-        }
-        
-        .logout-btn:hover {
-            background: #c82333;
-        }
-        
-        /* 권한 모달 */
-        .permission-modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            z-index: 1000;
-            justify-content: center;
-            align-items: center;
-        }
-        
-        .permission-modal.active {
-            display: flex;
-        }
-        
-        .permission-modal-content {
-            background: white;
-            padding: 40px;
-            border-radius: 12px;
-            max-width: 500px;
-            width: 90%;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
-        }
-        
-        .permission-modal-title {
-            font-size: 24px;
-            font-weight: bold;
-            color: var(--primary);
-            margin-bottom: 20px;
-        }
-        
-        .permission-modal-body {
-            font-size: 18px;
-            line-height: 1.6;
-            color: #333;
-        }
-        
-        .permission-modal-close {
-            margin-top: 20px;
-            padding: 12px 30px;
-            background: var(--primary);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            cursor: pointer;
-            width: 100%;
-        }
-        
-        .permission-modal-close:hover {
-            background: #1e4070;
-        }
-        
-        .nav-container {
-            background: white;
-            padding: 15px;
-            box-shadow: var(--shadow);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-        
-        .nav-buttons {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 10px;
-            max-width: 1400px;
-            margin: 0 auto;
-        }
-        
-        .nav-btn {
-            background: white;
-            border: 3px solid var(--primary);
-            color: var(--primary);
-            padding: 18px 12px;
-            font-size: 19px;
-            font-weight: bold;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: all 0.3s;
-            min-height: 70px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-        }
-        
-        .nav-btn:hover:not(:disabled) {
-            background: var(--primary);
-            color: white;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        }
-        
-        .nav-btn.active {
-            background: var(--primary);
-            color: white;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-        }
-        
-        .nav-btn:disabled {
-            opacity: 0.3;
-            cursor: not-allowed;
-        }
-        
-        .content-container {
-            flex: 1;
-            max-width: 1400px;
-            width: 100%;
-            margin: 30px auto;
-            padding: 0 20px;
-        }
-        
-        .tab-content {
-            display: none;
-            animation: fadeIn 0.3s ease;
-        }
-        
-        .tab-content.active {
-            display: block;
-        }
-        
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        
-        @media (max-width: 768px) {
-            .header h1 {
-                font-size: 22px;
-            }
-            
-            .nav-btn {
-                font-size: 17px;
-                padding: 15px 10px;
-                min-height: 60px;
-            }
-        }
-    </style>
-</head>
-<body>
-    <!-- 헤더 -->
-    <div class="header">
-        <div class="header-content">
-            <div>
-                <h1>🔬 연구소 업무 관리 대시보드</h1>
-                <p class="header-subtitle">실시간 업무 가시성 & 인터럽트 관리</p>
-            </div>
-            <div class="user-info">
-                <div class="user-name" id="user-name-display">로딩 중...</div>
-                <div class="permission-badge" id="permission-display" onclick="showPermissionModal()">
-                    -
-                </div>
-                <button class="logout-btn" onclick="logout()">로그아웃</button>
-            </div>
-        </div>
-    </div>
-    
-    <!-- 권한 모달 -->
-    <div class="permission-modal" id="permission-modal" onclick="closePermissionModal(event)">
-        <div class="permission-modal-content" onclick="event.stopPropagation()">
-            <div class="permission-modal-title" id="modal-title">🔑 권한 안내</div>
-            <div class="permission-modal-body" id="modal-body">
-                로딩 중...
-            </div>
-            <button class="permission-modal-close" onclick="closePermissionModal()">
-                확인
-            </button>
-        </div>
-    </div>
-    
-    <!-- 네비게이션 -->
-    <div class="nav-container">
-        <div class="nav-buttons">
-            <button class="nav-btn active" onclick="switchTab('dashboard')" id="nav-dashboard">
-                📊 대시보드
-            </button>
-            <button class="nav-btn" onclick="switchTab('projects')" id="nav-projects">
-                📋 프로젝트
-            </button>
-            <button class="nav-btn" onclick="switchTab('interrupt')" id="nav-interrupt">
-                ⚡ 인터럽트
-            </button>
-            <button class="nav-btn" onclick="switchTab('assets')" id="nav-assets">
-                📁 자산
-            </button>
-            <button class="nav-btn" onclick="switchTab('voc')" id="nav-voc">
-                💬 VOC
-            </button>
-            <button class="nav-btn" onclick="switchTab('settings')" id="nav-settings">
-                ⚙️ 설정
-            </button>
-        </div>
-    </div>
-    
-    <!-- 콘텐츠 영역 -->
-    <div class="content-container">
-        <div id="tab-dashboard" class="tab-content active"></div>
-        <div id="tab-projects" class="tab-content"></div>
-        <div id="tab-interrupt" class="tab-content"></div>
-        <div id="tab-assets" class="tab-content"></div>
-        <div id="tab-voc" class="tab-content"></div>
-        <div id="tab-settings" class="tab-content"></div>
-    </div>
+// 대시보드 탭 - 업무 방해 지수 도움말 추가
 
-    <script src="js/auth.js"></script>
-    <script src="js/api.js"></script>
-    <script src="js/dashboard.js"></script>
-    <script src="js/projects.js"></script>
-    <script src="js/interrupt.js"></script>
-    <script src="js/assets.js"></script>
-    <script src="js/voc.js"></script>
-    <script src="js/settings.js"></script>
+// ... (기존 코드 유지, loadInterruptAnalysis 함수만 수정)
+
+async function loadInterruptAnalysis(container) {
+    const chartContainer = container.querySelector('#interrupt-analysis');
     
-    <script>
-        let currentTab = 'dashboard';
-        let SESSION = null;
+    try {
+        const interrupts = await getInterrupts();
         
-        const PERMISSION_NOTICES = {
-            'GUEST': {
-                title: '🔑 GUEST (게스트)',
-                body: '<p><strong>조회만 가능합니다.</strong></p><ul style="margin: 10px 0; padding-left: 20px;"><li>대시보드 통계 확인</li><li>프로젝트 현황 조회</li><li>베이스라인 목록 조회</li></ul><p style="color: #dc3545;"><strong>제한:</strong> 데이터 입력 및 수정 불가</p>'
-            },
-            'EXTERNAL': {
-                title: '🔑 EXTERNAL (타 부서)',
-                body: '<p><strong>VOC 작성 및 인터럽트 등록이 가능합니다.</strong></p><ul style="margin: 10px 0; padding-left: 20px;"><li>VOC 작성</li><li>인터럽트 등록</li><li>베이스라인 파일 다운로드</li><li>대시보드 조회</li></ul><p style="color: #dc3545;"><strong>제한:</strong> 프로젝트 관리 및 설정 불가</p>'
-            },
-            'RESEARCHER': {
-                title: '🔑 RESEARCHER (연구원)',
-                body: '<p><strong>대부분의 기능을 사용할 수 있습니다.</strong></p><ul style="margin: 10px 0; padding-left: 20px;"><li>프로젝트 진행률 업데이트</li><li>베이스라인 생성</li><li>VOC 처리</li><li>인터럽트 관리</li></ul><p style="color: #dc3545;"><strong>제한:</strong> 시스템 설정 및 권한 관리 불가</p>'
-            },
-            'ADMIN': {
-                title: '🔑 ADMIN (관리자)',
-                body: '<p><strong>모든 기능을 사용할 수 있습니다.</strong></p><ul style="margin: 10px 0; padding-left: 20px;"><li>프로젝트 생성/삭제</li><li>권한 관리</li><li>시스템 설정</li><li>모든 데이터 접근</li></ul><p style="color: #28a745;"><strong>전체 권한 보유</strong></p>'
-            }
-        };
+        if (!interrupts || interrupts.length === 0) {
+            chartContainer.innerHTML = '<p>인터럽트 데이터가 없습니다.</p>';
+            return;
+        }
         
-        window.addEventListener('DOMContentLoaded', function() {
-            SESSION = requireSession();
+        const deptStats = {};
+        let totalHours = 0;
+        
+        interrupts.forEach(item => {
+            const dept = item['요청부서'] || '기타';
+            const hours = parseFloat(item['예상소요시간']) || 0;
             
-            if (!SESSION) {
-                return;
-            }
-            
-            document.getElementById('user-name-display').textContent = 
-                `${SESSION.name} (${SESSION.email})`;
-            document.getElementById('permission-display').textContent = SESSION.permission;
-            
-            adjustUIByPermission();
-            loadTab('dashboard');
+            deptStats[dept] = (deptStats[dept] || 0) + hours;
+            totalHours += hours;
         });
         
-        function showPermissionModal() {
-            const modal = document.getElementById('permission-modal');
-            const permission = SESSION.permission;
-            const notice = PERMISSION_NOTICES[permission];
-            
-            document.getElementById('modal-title').textContent = notice.title;
-            document.getElementById('modal-body').innerHTML = notice.body;
-            
-            modal.classList.add('active');
-        }
+        const topDepts = Object.entries(deptStats)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 5);
         
-        function closePermissionModal(event) {
-            if (!event || event.target.id === 'permission-modal') {
-                document.getElementById('permission-modal').classList.remove('active');
-            }
-        }
+        const threshold = 50; // 기준값
+        const isHigh = totalHours > threshold;
         
-        function adjustUIByPermission() {
-            const permission = SESSION.permission;
-            
-            if (permission === 'GUEST') {
-                document.getElementById('nav-projects').disabled = true;
-                document.getElementById('nav-interrupt').disabled = true;
-                document.getElementById('nav-voc').disabled = true;
-                document.getElementById('nav-settings').disabled = true;
-            }
-            else if (permission === 'EXTERNAL') {
-                document.getElementById('nav-projects').disabled = true;
-                document.getElementById('nav-settings').disabled = true;
-            }
-            else if (permission === 'RESEARCHER') {
-                document.getElementById('nav-settings').disabled = true;
-            }
-        }
+        let html = `
+            <div class="interrupt-grid">
+                <div>
+                    <h4 style="margin-bottom: 15px;">부서별 인터럽트 시간</h4>
+                    <div class="bar-chart">
+        `;
         
-        function switchTab(tabName) {
-            document.querySelectorAll('.tab-content').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            document.querySelectorAll('.nav-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            
-            document.getElementById(`tab-${tabName}`).classList.add('active');
-            document.getElementById(`nav-${tabName}`).classList.add('active');
-            
-            currentTab = tabName;
-            loadTab(tabName);
-        }
-        
-        function loadTab(tabName) {
-            const container = document.getElementById(`tab-${tabName}`);
-            
-            if (container.dataset.loaded === 'true') {
-                const refreshFn = window[`refresh${capitalize(tabName)}Tab`];
-                if (typeof refreshFn === 'function') {
-                    refreshFn();
-                }
-                return;
-            }
-            
-            const initFn = window[`init${capitalize(tabName)}Tab`];
-            if (typeof initFn === 'function') {
-                initFn(container);
-                container.dataset.loaded = 'true';
-            } else {
-                container.innerHTML = `
-                    <div class="card">
-                        <div class="card-title">${getTabTitle(tabName)}</div>
-                        <div class="loading">로딩 중...</div>
+        topDepts.forEach(([dept, hours]) => {
+            const percent = (hours / totalHours * 100).toFixed(0);
+            html += `
+                <div class="bar-item">
+                    <div class="bar-label">
+                        <span>${dept}</span>
+                        <span>${hours.toFixed(1)}시간</span>
                     </div>
-                `;
-            }
-        }
-        
-        function capitalize(str) {
-            return str.charAt(0).toUpperCase() + str.slice(1);
-        }
-        
-        function getTabTitle(tabName) {
-            const titles = {
-                dashboard: '📊 대시보드',
-                projects: '📋 프로젝트 관리',
-                interrupt: '⚡ 인터럽트 관리',
-                assets: '📁 베이스라인 & 자산',
-                voc: '💬 VOC (고객의 소리)',
-                settings: '⚙️ 시스템 설정'
-            };
-            return titles[tabName] || tabName;
-        }
-        
-        function showError(container, message) {
-            container.innerHTML = `
-                <div class="card">
-                    <div class="alert alert-danger">
-                        <strong>오류:</strong> ${message}
+                    <div class="bar-track">
+                        <div class="bar-fill" style="width: ${percent}%;">
+                            ${percent}%
+                        </div>
                     </div>
                 </div>
             `;
-        }
+        });
         
-        function showSuccess(container, message) {
-            const alert = document.createElement('div');
-            alert.className = 'alert alert-success';
-            alert.textContent = message;
-            
-            container.insertBefore(alert, container.firstChild);
-            
-            setTimeout(() => {
-                alert.remove();
-            }, 5000);
-        }
-    </script>
-</body>
-</html>
+        html += `
+                    </div>
+                </div>
+                
+                <div>
+                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 15px;">
+                        <h4 style="margin: 0;">업무 방해 지수</h4>
+                        <button onclick="showDisruptionHelp()" style="
+                            background: var(--info);
+                            color: white;
+                            border: none;
+                            border-radius: 50%;
+                            width: 24px;
+                            height: 24px;
+                            cursor: pointer;
+                            font-size: 14px;
+                            font-weight: bold;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                        ">?</button>
+                    </div>
+                    
+                    <div style="background: ${isHigh ? 'linear-gradient(135deg, #f093fb, #f5576c)' : 'linear-gradient(135deg, #4facfe, #00f2fe)'}; 
+                                padding: 40px 20px; 
+                                border-radius: 12px; 
+                                text-align: center;
+                                color: white;">
+                        <div style="font-size: 18px; opacity: 0.9; margin-bottom: 15px;">현재 상태</div>
+                        <div style="font-size: 64px; font-weight: bold; margin: 20px 0;">
+                            ${isHigh ? '높음' : '양호'}
+                        </div>
+                        <div style="font-size: 16px; opacity: 0.9;">
+                            ${isHigh ? '⚠️ 인터럽트가 많습니다' : '✅ 안정적입니다'}
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 20px; display: grid; gap: 10px;">
+                        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; text-align: center;">
+                            <div style="font-size: 13px; color: #666; margin-bottom: 5px;">총 인터럽트</div>
+                            <div style="font-size: 24px; font-weight: bold; color: var(--danger);">${interrupts.length}건</div>
+                        </div>
+                        
+                        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; text-align: center;">
+                            <div style="font-size: 13px; color: #666; margin-bottom: 5px;">총 손실 시간</div>
+                            <div style="font-size: 24px; font-weight: bold; color: var(--warning);">${totalHours.toFixed(1)}시간</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        chartContainer.innerHTML = html;
+        
+    } catch (error) {
+        console.error('인터럽트 분석 오류:', error);
+        chartContainer.innerHTML = '<div class="alert alert-danger">데이터 로딩 실패</div>';
+    }
+}
+
+// 도움말 함수
+function showDisruptionHelp() {
+    alert(`📊 업무 방해 지수 계산 방식
+
+✅ 양호 (50시간 이하)
+• 월간 인터럽트 총 시간 ≤ 50시간
+• 팀원 1인당 평균 10시간 이하
+• 연구 업무에 집중 가능한 상태
+
+⚠️ 높음 (50시간 초과)
+• 월간 인터럽트 총 시간 > 50시간
+• 팀원 1인당 평균 10시간 초과
+• 정기 회의 시간 조정 권장
+
+💡 기준
+5명 팀 기준 월 160시간 중
+50시간 = 약 30% (업무 집중도 임계점)`);
+}
