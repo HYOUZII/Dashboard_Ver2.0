@@ -49,11 +49,20 @@
         
         .permission-badge {
             display: inline-block;
-            padding: 4px 12px;
-            border-radius: 12px;
-            background: rgba(255,255,255,0.2);
+            padding: 6px 16px;
+            border-radius: 20px;
+            background: rgba(255,255,255,0.3);
             font-size: 14px;
             margin-top: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid rgba(255,255,255,0.5);
+        }
+        
+        .permission-badge:hover {
+            background: rgba(255,255,255,0.4);
+            border-color: rgba(255,255,255,0.8);
+            transform: scale(1.05);
         }
         
         .logout-btn {
@@ -69,6 +78,61 @@
         
         .logout-btn:hover {
             background: #c82333;
+        }
+        
+        .permission-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .permission-modal.active {
+            display: flex;
+        }
+        
+        .permission-modal-content {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+        
+        .permission-modal-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--primary);
+            margin-bottom: 20px;
+        }
+        
+        .permission-modal-body {
+            font-size: 18px;
+            line-height: 1.6;
+            color: #333;
+        }
+        
+        .permission-modal-close {
+            margin-top: 20px;
+            padding: 12px 30px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            width: 100%;
+        }
+        
+        .permission-modal-close:hover {
+            background: #1e4070;
         }
         
         .nav-container {
@@ -151,19 +215,6 @@
             }
         }
         
-        .permission-info {
-            background: #fff3cd;
-            border: 2px solid #ffc107;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-        }
-        
-        .permission-info h4 {
-            margin-bottom: 10px;
-            color: #856404;
-        }
-        
         @media (max-width: 768px) {
             .header h1 {
                 font-size: 22px;
@@ -178,7 +229,6 @@
     </style>
 </head>
 <body>
-    <!-- 헤더 -->
     <div class="header">
         <div class="header-content">
             <div>
@@ -187,13 +237,26 @@
             </div>
             <div class="user-info">
                 <div class="user-name" id="user-name-display">로딩 중...</div>
-                <div class="permission-badge" id="permission-display">-</div>
+                <div class="permission-badge" id="permission-display" onclick="showPermissionModal()">
+                    -
+                </div>
                 <button class="logout-btn" onclick="logout()">로그아웃</button>
             </div>
         </div>
     </div>
     
-    <!-- 네비게이션 -->
+    <div class="permission-modal" id="permission-modal" onclick="closePermissionModal(event)">
+        <div class="permission-modal-content" onclick="event.stopPropagation()">
+            <div class="permission-modal-title" id="modal-title">🔑 권한 안내</div>
+            <div class="permission-modal-body" id="modal-body">
+                로딩 중...
+            </div>
+            <button class="permission-modal-close" onclick="closePermissionModal()">
+                확인
+            </button>
+        </div>
+    </div>
+    
     <div class="nav-container">
         <div class="nav-buttons">
             <button class="nav-btn active" onclick="switchTab('dashboard')" id="nav-dashboard">
@@ -217,32 +280,17 @@
         </div>
     </div>
     
-    <!-- 콘텐츠 영역 -->
     <div class="content-container">
-        <!-- 대시보드 탭 -->
         <div id="tab-dashboard" class="tab-content active"></div>
-        
-        <!-- 프로젝트 탭 -->
         <div id="tab-projects" class="tab-content"></div>
-        
-        <!-- 인터럽트 탭 -->
         <div id="tab-interrupt" class="tab-content"></div>
-        
-        <!-- 자산 탭 -->
         <div id="tab-assets" class="tab-content"></div>
-        
-        <!-- VOC 탭 -->
         <div id="tab-voc" class="tab-content"></div>
-        
-        <!-- 설정 탭 -->
         <div id="tab-settings" class="tab-content"></div>
     </div>
 
-    <!-- 공통 스크립트 -->
     <script src="js/auth.js"></script>
     <script src="js/api.js"></script>
-    
-    <!-- 탭별 스크립트 -->
     <script src="js/dashboard.js"></script>
     <script src="js/projects.js"></script>
     <script src="js/interrupt.js"></script>
@@ -251,57 +299,79 @@
     <script src="js/settings.js"></script>
     
     <script>
-        // 전역 변수
         let currentTab = 'dashboard';
         let SESSION = null;
         
-        // 페이지 로드
+        const PERMISSION_NOTICES = {
+            'GUEST': {
+                title: '🔑 GUEST (게스트)',
+                body: '<p><strong>조회만 가능합니다.</strong></p><ul style="margin: 10px 0; padding-left: 20px;"><li>대시보드 통계 확인</li><li>프로젝트 현황 조회</li><li>베이스라인 목록 조회</li></ul><p style="color: #dc3545;"><strong>제한:</strong> 데이터 입력 및 수정 불가</p>'
+            },
+            'EXTERNAL': {
+                title: '🔑 EXTERNAL (타 부서)',
+                body: '<p><strong>VOC 작성 및 인터럽트 등록이 가능합니다.</strong></p><ul style="margin: 10px 0; padding-left: 20px;"><li>VOC 작성</li><li>인터럽트 등록</li><li>베이스라인 파일 다운로드</li><li>대시보드 조회</li></ul><p style="color: #dc3545;"><strong>제한:</strong> 프로젝트 관리 및 설정 불가</p>'
+            },
+            'RESEARCHER': {
+                title: '🔑 RESEARCHER (연구원)',
+                body: '<p><strong>대부분의 기능을 사용할 수 있습니다.</strong></p><ul style="margin: 10px 0; padding-left: 20px;"><li>프로젝트 진행률 업데이트</li><li>베이스라인 생성</li><li>VOC 처리</li><li>인터럽트 관리</li></ul><p style="color: #dc3545;"><strong>제한:</strong> 시스템 설정 및 권한 관리 불가</p>'
+            },
+            'ADMIN': {
+                title: '🔑 ADMIN (관리자)',
+                body: '<p><strong>모든 기능을 사용할 수 있습니다.</strong></p><ul style="margin: 10px 0; padding-left: 20px;"><li>프로젝트 생성/삭제</li><li>권한 관리</li><li>시스템 설정</li><li>모든 데이터 접근</li></ul><p style="color: #28a745;"><strong>전체 권한 보유</strong></p>'
+            }
+        };
+        
         window.addEventListener('DOMContentLoaded', function() {
-            // 세션 확인
             SESSION = requireSession();
             
             if (!SESSION) {
-                return; // requireSession()이 자동으로 로그인 페이지로 리다이렉트
+                return;
             }
             
-            // 사용자 정보 표시
             document.getElementById('user-name-display').textContent = 
                 `${SESSION.name} (${SESSION.email})`;
             document.getElementById('permission-display').textContent = SESSION.permission;
             
-            // 권한별 UI 조정
             adjustUIByPermission();
-            
-            // 초기 탭 로드
             loadTab('dashboard');
         });
         
-        // 권한별 UI 조정
+        function showPermissionModal() {
+            const modal = document.getElementById('permission-modal');
+            const permission = SESSION.permission;
+            const notice = PERMISSION_NOTICES[permission];
+            
+            document.getElementById('modal-title').textContent = notice.title;
+            document.getElementById('modal-body').innerHTML = notice.body;
+            
+            modal.classList.add('active');
+        }
+        
+        function closePermissionModal(event) {
+            if (!event || event.target.id === 'permission-modal') {
+                document.getElementById('permission-modal').classList.remove('active');
+            }
+        }
+        
         function adjustUIByPermission() {
             const permission = SESSION.permission;
             
-            // GUEST: 대부분 비활성화
             if (permission === 'GUEST') {
                 document.getElementById('nav-projects').disabled = true;
                 document.getElementById('nav-interrupt').disabled = true;
                 document.getElementById('nav-voc').disabled = true;
                 document.getElementById('nav-settings').disabled = true;
             }
-            // EXTERNAL: 프로젝트, 설정 비활성화
             else if (permission === 'EXTERNAL') {
                 document.getElementById('nav-projects').disabled = true;
                 document.getElementById('nav-settings').disabled = true;
             }
-            // RESEARCHER: 설정만 비활성화
             else if (permission === 'RESEARCHER') {
                 document.getElementById('nav-settings').disabled = true;
             }
-            // ADMIN: 모두 활성화
         }
         
-        // 탭 전환
         function switchTab(tabName) {
-            // 이전 탭 비활성화
             document.querySelectorAll('.tab-content').forEach(tab => {
                 tab.classList.remove('active');
             });
@@ -309,22 +379,17 @@
                 btn.classList.remove('active');
             });
             
-            // 새 탭 활성화
             document.getElementById(`tab-${tabName}`).classList.add('active');
             document.getElementById(`nav-${tabName}`).classList.add('active');
             
-            // 탭 로드
             currentTab = tabName;
             loadTab(tabName);
         }
         
-        // 탭 로드
         function loadTab(tabName) {
             const container = document.getElementById(`tab-${tabName}`);
             
-            // 이미 로드됨
             if (container.dataset.loaded === 'true') {
-                // 탭별 리프레시 함수가 있으면 호출
                 const refreshFn = window[`refresh${capitalize(tabName)}Tab`];
                 if (typeof refreshFn === 'function') {
                     refreshFn();
@@ -332,7 +397,6 @@
                 return;
             }
             
-            // 탭별 초기화 함수 호출
             const initFn = window[`init${capitalize(tabName)}Tab`];
             if (typeof initFn === 'function') {
                 initFn(container);
@@ -347,7 +411,6 @@
             }
         }
         
-        // 헬퍼 함수
         function capitalize(str) {
             return str.charAt(0).toUpperCase() + str.slice(1);
         }
@@ -364,26 +427,6 @@
             return titles[tabName] || tabName;
         }
         
-        // 권한 확인 UI 표시
-        function showPermissionInfo(container, permission) {
-            const notices = {
-                'GUEST': '게스트 권한입니다. 조회만 가능합니다.',
-                'EXTERNAL': '타 부서 권한입니다. VOC 작성, 파일 다운로드, 인터럽트 등록이 가능합니다.',
-                'RESEARCHER': '연구원 권한입니다. 대부분의 기능을 사용할 수 있습니다.',
-                'ADMIN': '관리자 권한입니다. 모든 기능을 사용할 수 있습니다.'
-            };
-            
-            const permissionInfo = document.createElement('div');
-            permissionInfo.className = 'permission-info';
-            permissionInfo.innerHTML = `
-                <h4>🔑 ${permission}</h4>
-                <p>${notices[permission]}</p>
-            `;
-            
-            container.insertBefore(permissionInfo, container.firstChild);
-        }
-        
-        // 에러 표시
         function showError(container, message) {
             container.innerHTML = `
                 <div class="card">
@@ -394,7 +437,6 @@
             `;
         }
         
-        // 성공 메시지
         function showSuccess(container, message) {
             const alert = document.createElement('div');
             alert.className = 'alert alert-success';
