@@ -365,12 +365,19 @@ async function loadInterruptAnalysis(container) {
     const chartContainer = container.querySelector('#interrupt-analysis');
     
     try {
-        const interrupts = await getInterrupts();
+        const [interrupts, members] = await Promise.all([
+            getInterrupts(),
+            getTeamMembers()
+        ]);
         
         if (!interrupts || interrupts.length === 0) {
             chartContainer.innerHTML = '<p>인터럽트 데이터가 없습니다.</p>';
             return;
         }
+        
+        // 재직 중인 팀원 수 계산
+        const teamSize = members ? members.filter(m => m['상태'] === '재직').length : 5;
+        const threshold = teamSize * 10; // 1인당 10시간 기준
         
         const deptStats = {};
         let totalHours = 0;
@@ -387,7 +394,6 @@ async function loadInterruptAnalysis(container) {
             .sort((a, b) => b[1] - a[1])
             .slice(0, 5);
         
-        const threshold = 50;
         const isHigh = totalHours > threshold;
         
         let html = `
@@ -461,23 +467,31 @@ async function loadInterruptAnalysis(container) {
     }
 }
 
-// 도움말 함수
-function showDisruptionHelp() {
-    alert(`📊 업무 방해 지수 계산 방식
+// 도움말 함수 (동적)
+async function showDisruptionHelp() {
+    try {
+        const members = await getTeamMembers();
+        const teamSize = members ? members.filter(m => m['상태'] === '재직').length : 5;
+        const threshold = teamSize * 10; // 1인당 10시간 기준
+        
+        alert(`📊 업무 방해 지수 계산 방식
 
-✅ 양호 (50시간 이하)
-• 월간 인터럽트 총 시간 ≤ 50시간
+✅ 양호 (${threshold}시간 이하)
+• 월간 인터럽트 총 시간 ≤ ${threshold}시간
 • 팀원 1인당 평균 10시간 이하
 • 연구 업무에 집중 가능한 상태
 
-⚠️ 높음 (50시간 초과)
-• 월간 인터럽트 총 시간 > 50시간
+⚠️ 높음 (${threshold}시간 초과)
+• 월간 인터럽트 총 시간 > ${threshold}시간
 • 팀원 1인당 평균 10시간 초과
 • 정기 회의 시간 조정 권장
 
 💡 기준
-5명 팀 기준 월 160시간 중
-50시간 = 약 30% (업무 집중도 임계점)`);
+${teamSize}명 팀 기준 월 ${teamSize * 160}시간 중
+${threshold}시간 = 약 30% (업무 집중도 임계점)`);
+    } catch (error) {
+        alert('도움말을 불러올 수 없습니다.');
+    }
 }
 
 // 3. 팀 생산성 대시보드
