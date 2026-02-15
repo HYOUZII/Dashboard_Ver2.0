@@ -129,3 +129,11 @@ async function updatePermission(email, updates) {
         ...updates
     });
 }
+
+// ==========================================
+// 팀원 API
+// ==========================================
+
+async function getTeamMembers() {
+    return await callAPI('getTeamMembers');
+}
