@@ -1,7 +1,7 @@
 // 연구소 업무 관리 대시보드 - 인증 관리 모듈
 
 // ⚠️ 여기에 본인의 Apps Script URL을 입력하세요
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzJtwdRNFLzOk3xgZun7A6sfW-XMpT0uLwef6vl89rW_TSdazHiMis8_pwEUnsiaMA/exec';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw5soD3yB--YcWiqJK51bgmOmnkl0QPw2n1NDr8i1LhHUvpHJsYY0Lihu2pAe7JvRY/exec';
 
 // 세션 유효 시간 (시간)
 const SESSION_DURATION_HOURS = 8;
