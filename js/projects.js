@@ -1,7 +1,6 @@
-// 프로젝트 탭 관리 - 완전판
+// 프로젝트 탭 - 완전한 일정 관리
 
 async function initProjectsTab(container) {
-    // 권한별 UI 분기
     const canCreate = SESSION.permission === 'ADMIN';
     const canEdit = SESSION.permission === 'RESEARCHER' || SESSION.permission === 'ADMIN';
     
@@ -200,7 +199,7 @@ async function initProjectsTab(container) {
         </style>
         
         <div class="card">
-            <div class="card-title">📋 프로젝트 관리</div>
+            <div class="card-title">📋 프로젝트 일정 관리</div>
             
             <div class="projects-header">
                 <div class="search-box">
@@ -261,10 +260,6 @@ async function initProjectsTab(container) {
                             <label class="form-label">PM</label>
                             <select class="form-select" id="project-pm">
                                 <option value="">선택하세요</option>
-                                <option value="M001">김하드</option>
-                                <option value="M002">이펌웨</option>
-                                <option value="M003">박펌웨</option>
-                                <option value="M005">정큐에</option>
                             </select>
                         </div>
                         
@@ -299,9 +294,8 @@ async function initProjectsTab(container) {
                         </div>
                         
                         <div class="form-group">
-                            <label class="form-label">진행률 (%)</label>
-                            <input type="number" class="form-input" id="project-progress" 
-                                   min="0" max="100" value="0">
+                            <label class="form-label">실제완료일</label>
+                            <input type="date" class="form-input" id="project-actual-end">
                         </div>
                     </div>
                     
@@ -309,12 +303,6 @@ async function initProjectsTab(container) {
                         <label class="form-label">Git 링크</label>
                         <input type="url" class="form-input" id="project-git" 
                                placeholder="https://github.com/...">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">비고</label>
-                        <textarea class="form-textarea" id="project-note" 
-                                  placeholder="프로젝트 관련 메모"></textarea>
                     </div>
                     
                     <div style="display: flex; gap: 10px; margin-top: 20px;">
@@ -332,6 +320,7 @@ async function initProjectsTab(container) {
     `;
     
     loadProjectsList(container);
+    loadTeamMembersToPMSelect();
     
     // 검색 기능
     document.getElementById('project-search').addEventListener('input', function(e) {
@@ -348,6 +337,25 @@ async function initProjectsTab(container) {
 let currentFilter = 'all';
 let allProjects = [];
 let editingProjectId = null;
+
+async function loadTeamMembersToPMSelect() {
+    try {
+        const members = await getTeamMembers();
+        const pmSelect = document.getElementById('project-pm');
+        
+        if (members && pmSelect) {
+            pmSelect.innerHTML = '<option value="">선택하세요</option>';
+            members.filter(m => m['상태'] === '재직').forEach(member => {
+                const option = document.createElement('option');
+                option.value = member['ID'];
+                option.textContent = `${member['이름']} (${member['주역할']})`;
+                pmSelect.appendChild(option);
+            });
+        }
+    } catch (error) {
+        console.error('팀원 목록 로딩 오류:', error);
+    }
+}
 
 async function loadProjectsList(container) {
     const listContainer = container.querySelector('#projects-list');
@@ -443,7 +451,7 @@ function renderProjects(projects, container) {
                 
                 <div class="progress-section">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <strong>진행률</strong>
+                        <strong>진행률 (자동 계산)</strong>
                         <span>${progress}%</span>
                     </div>
                     <div class="progress-bar-container">
@@ -460,6 +468,11 @@ function renderProjects(projects, container) {
 }
 
 function calculateProgress(project) {
+    // 완료된 프로젝트
+    if (project['상태'] === '완료' && project['실제완료일']) {
+        return 100;
+    }
+    
     const startDate = new Date(project['착수일'] || Date.now());
     const endDate = new Date(project['예상완료일'] || Date.now());
     const today = new Date();
@@ -484,13 +497,11 @@ function getStatusBadge(status) {
 function filterProjects(status) {
     currentFilter = status;
     
-    // 버튼 활성화
     document.querySelectorAll('.filter-btn').forEach(btn => {
         btn.classList.remove('active');
     });
     event.target.classList.add('active');
     
-    // 프로젝트 필터링
     const cards = document.querySelectorAll('.project-card');
     cards.forEach(card => {
         if (status === 'all' || card.dataset.status === status) {
@@ -507,7 +518,6 @@ function showProjectModal(projectId = null) {
     const form = document.getElementById('project-form');
     
     if (projectId) {
-        // 수정 모드
         document.getElementById('modal-title').textContent = '✏️ 프로젝트 수정';
         const project = allProjects.find(p => p['프로젝트ID'] === projectId);
         
@@ -519,12 +529,10 @@ function showProjectModal(projectId = null) {
             document.getElementById('project-start').value = project['착수일'] || '';
             document.getElementById('project-end').value = project['예상완료일'] || '';
             document.getElementById('project-status').value = project['상태'] || '진행중';
-            document.getElementById('project-progress').value = calculateProgress(project);
+            document.getElementById('project-actual-end').value = project['실제완료일'] || '';
             document.getElementById('project-git').value = project['Git링크'] || '';
-            document.getElementById('project-note').value = project['비고'] || '';
         }
     } else {
-        // 생성 모드
         document.getElementById('modal-title').textContent = '➕ 새 프로젝트';
         form.reset();
         document.getElementById('project-start').valueAsDate = new Date();
@@ -550,22 +558,19 @@ async function handleProjectSubmit(event) {
         scope: document.getElementById('project-scope').value,
         startDate: document.getElementById('project-start').value,
         expectedEndDate: document.getElementById('project-end').value,
+        actualEndDate: document.getElementById('project-actual-end').value,
         status: document.getElementById('project-status').value,
-        progress: document.getElementById('project-progress').value,
-        gitLink: document.getElementById('project-git').value,
-        note: document.getElementById('project-note').value
+        gitLink: document.getElementById('project-git').value
     };
     
     try {
         let result;
         if (editingProjectId) {
-            // 수정
             result = await callAPI('updateProject', {
                 projectId: editingProjectId,
                 ...projectData
             });
         } else {
-            // 생성
             result = await addProject(projectData);
         }
         
