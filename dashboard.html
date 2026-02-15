@@ -1,4 +1,4 @@
-// 대시보드 탭 관리 - 입력 부담 ZERO 버전
+// 대시보드 탭 관리 - 완전 새 버전
 
 async function initDashboardTab(container) {
     container.innerHTML = `
@@ -38,11 +38,6 @@ async function initDashboardTab(container) {
                 font-size: 14px;
             }
             
-            .refresh-btn:hover {
-                background: #1e4070;
-            }
-            
-            /* 간트 차트 */
             .gantt-chart {
                 overflow-x: auto;
             }
@@ -81,40 +76,13 @@ async function initDashboardTab(container) {
                 transition: all 0.3s;
             }
             
-            .gantt-bar:hover {
-                transform: scale(1.02);
-                box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-            }
-            
             .gantt-bar.planning { background: #ffc107; }
             .gantt-bar.design { background: #17a2b8; }
             .gantt-bar.development { background: #28a745; }
             .gantt-bar.testing { background: #fd7e14; }
             .gantt-bar.production { background: #6c757d; }
-            .gantt-bar.delayed { background: #dc3545; animation: pulse 2s infinite; }
+            .gantt-bar.delayed { background: #dc3545; }
             
-            @keyframes pulse {
-                0%, 100% { opacity: 1; }
-                50% { opacity: 0.7; }
-            }
-            
-            .risk-indicator {
-                position: absolute;
-                top: -5px;
-                right: -5px;
-                width: 20px;
-                height: 20px;
-                background: #dc3545;
-                border-radius: 50%;
-                color: white;
-                font-size: 14px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                animation: pulse 2s infinite;
-            }
-            
-            /* 통계 카드 */
             .stats-row {
                 display: grid;
                 grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -130,35 +98,11 @@ async function initDashboardTab(container) {
                 text-align: center;
             }
             
-            .stat-label {
-                font-size: 14px;
-                opacity: 0.9;
-                margin-bottom: 8px;
-            }
-            
-            .stat-value {
-                font-size: 32px;
-                font-weight: bold;
-            }
-            
-            .stat-unit {
-                font-size: 14px;
-                opacity: 0.9;
-                margin-top: 5px;
-            }
-            
-            /* 인터럽트 차트 */
             .interrupt-grid {
                 display: grid;
                 grid-template-columns: 1fr 1fr;
                 gap: 30px;
                 margin-top: 20px;
-            }
-            
-            @media (max-width: 768px) {
-                .interrupt-grid {
-                    grid-template-columns: 1fr;
-                }
             }
             
             .bar-chart {
@@ -195,51 +139,34 @@ async function initDashboardTab(container) {
                 transition: width 0.5s ease;
             }
             
-            /* 생산성 차트 */
-            .productivity-card {
-                background: linear-gradient(135deg, #667eea, #764ba2);
-                color: white;
-                padding: 30px;
-                border-radius: 12px;
-                text-align: center;
-            }
-            
-            .productivity-score {
-                font-size: 64px;
-                font-weight: bold;
-                margin: 20px 0;
-            }
-            
-            .productivity-grade {
-                font-size: 24px;
-                opacity: 0.9;
+            @media (max-width: 768px) {
+                .interrupt-grid {
+                    grid-template-columns: 1fr;
+                }
             }
         </style>
         
         <div class="dashboard-grid">
-            <!-- 1. 프로젝트 간트 차트 -->
             <div class="chart-card">
                 <div class="chart-title">
-                    <span>📊 프로젝트 현황 & 일정</span>
+                    <span>📊 프로젝트 현황</span>
                     <button class="refresh-btn" onclick="refreshDashboardTab()">🔄 새로고침</button>
                 </div>
-                <div id="gantt-chart-container" class="loading">데이터 로딩 중...</div>
+                <div id="gantt-chart-container">로딩 중...</div>
             </div>
             
-            <!-- 2. 인터럽트 분석 -->
             <div class="chart-card">
                 <div class="chart-title">
-                    <span>⚡ 인터럽트 분석 (업무 방해 현황)</span>
+                    <span>⚡ 인터럽트 분석</span>
                 </div>
-                <div id="interrupt-analysis" class="loading">데이터 로딩 중...</div>
+                <div id="interrupt-analysis">로딩 중...</div>
             </div>
             
-            <!-- 3. 팀 생산성 대시보드 -->
             <div class="chart-card">
                 <div class="chart-title">
-                    <span>🎯 팀 생산성 지표</span>
+                    <span>🎯 팀 생산성</span>
                 </div>
-                <div id="productivity-dashboard" class="loading">데이터 로딩 중...</div>
+                <div id="productivity-dashboard">로딩 중...</div>
             </div>
         </div>
     `;
@@ -249,7 +176,6 @@ async function initDashboardTab(container) {
     loadProductivityDashboard(container);
 }
 
-// 1. 간트 차트 (기존 유지)
 async function loadGanttChart(container) {
     const chartContainer = container.querySelector('#gantt-chart-container');
     
@@ -257,15 +183,13 @@ async function loadGanttChart(container) {
         const projects = await getProjects();
         
         if (!projects || projects.length === 0) {
-            chartContainer.innerHTML = '<p>진행중인 프로젝트가 없습니다.</p>';
+            chartContainer.innerHTML = '<p>프로젝트가 없습니다.</p>';
             return;
         }
         
         let html = '<div class="gantt-chart">';
         
-        const stageCounts = {
-            '기획': 0, '설계': 0, '개발': 0, '테스트': 0, '양산': 0
-        };
+        const stageCounts = { '기획': 0, '설계': 0, '개발': 0, '테스트': 0, '양산': 0 };
         
         projects.forEach(project => {
             const startDate = new Date(project['착수일'] || Date.now());
@@ -298,7 +222,6 @@ async function loadGanttChart(container) {
                     <div class="gantt-timeline">
                         <div class="gantt-bar ${stageClass}" style="left: 0%; width: ${progress}%;">
                             ${stage} (${Math.round(progress)}%)
-                            ${isDelayed ? '<div class="risk-indicator">!</div>' : ''}
                         </div>
                     </div>
                 </div>
@@ -307,45 +230,26 @@ async function loadGanttChart(container) {
         
         html += '</div>';
         
-        html += `
-            <div class="stats-row">
-                <div class="stat-box" style="background: linear-gradient(135deg, #ffc107, #ff9800);">
-                    <div class="stat-label">기획</div>
-                    <div class="stat-value">${stageCounts['기획']}</div>
-                    <div class="stat-unit">개</div>
+        html += '<div class="stats-row">';
+        Object.entries(stageCounts).forEach(([stage, count]) => {
+            html += `
+                <div class="stat-box">
+                    <div style="font-size: 14px; opacity: 0.9;">${stage}</div>
+                    <div style="font-size: 32px; font-weight: bold; margin: 10px 0;">${count}</div>
+                    <div style="font-size: 14px; opacity: 0.9;">개</div>
                 </div>
-                <div class="stat-box" style="background: linear-gradient(135deg, #17a2b8, #138496);">
-                    <div class="stat-label">설계</div>
-                    <div class="stat-value">${stageCounts['설계']}</div>
-                    <div class="stat-unit">개</div>
-                </div>
-                <div class="stat-box" style="background: linear-gradient(135deg, #28a745, #218838);">
-                    <div class="stat-label">개발</div>
-                    <div class="stat-value">${stageCounts['개발']}</div>
-                    <div class="stat-unit">개</div>
-                </div>
-                <div class="stat-box" style="background: linear-gradient(135deg, #fd7e14, #e8590c);">
-                    <div class="stat-label">테스트</div>
-                    <div class="stat-value">${stageCounts['테스트']}</div>
-                    <div class="stat-unit">개</div>
-                </div>
-                <div class="stat-box" style="background: linear-gradient(135deg, #6c757d, #5a6268);">
-                    <div class="stat-label">양산</div>
-                    <div class="stat-value">${stageCounts['양산']}</div>
-                    <div class="stat-unit">개</div>
-                </div>
-            </div>
-        `;
+            `;
+        });
+        html += '</div>';
         
         chartContainer.innerHTML = html;
         
     } catch (error) {
-        console.error('간트 차트 로딩 오류:', error);
-        chartContainer.innerHTML = '<div class="alert alert-danger">데이터 로딩 실패</div>';
+        console.error('간트 차트 오류:', error);
+        chartContainer.innerHTML = '<div style="color: red;">데이터 로딩 실패</div>';
     }
 }
 
-// 2. 인터럽트 분석 (자동 계산)
 async function loadInterruptAnalysis(container) {
     const chartContainer = container.querySelector('#interrupt-analysis');
     
@@ -363,24 +267,14 @@ async function loadInterruptAnalysis(container) {
         interrupts.forEach(item => {
             const dept = item['요청부서'] || '기타';
             const hours = parseFloat(item['예상소요시간']) || 0;
-            
             deptStats[dept] = (deptStats[dept] || 0) + hours;
             totalHours += hours;
         });
         
-        const topDepts = Object.entries(deptStats)
-            .sort((a, b) => b[1] - a[1])
-            .slice(0, 5);
+        const topDepts = Object.entries(deptStats).sort((a, b) => b[1] - a[1]).slice(0, 5);
+        const isHigh = totalHours > 50;
         
-        const threshold = 50;
-        const isHigh = totalHours > threshold;
-        
-        let html = `
-            <div class="interrupt-grid">
-                <div>
-                    <h4 style="margin-bottom: 15px;">부서별 인터럽트 시간</h4>
-                    <div class="bar-chart">
-        `;
+        let html = '<div class="interrupt-grid"><div><h4>부서별 인터럽트 시간</h4><div class="bar-chart">';
         
         topDepts.forEach(([dept, hours]) => {
             const percent = (hours / totalHours * 100).toFixed(0);
@@ -391,75 +285,42 @@ async function loadInterruptAnalysis(container) {
                         <span>${hours.toFixed(1)}시간</span>
                     </div>
                     <div class="bar-track">
-                        <div class="bar-fill" style="width: ${percent}%;">
-                            ${percent}%
-                        </div>
+                        <div class="bar-fill" style="width: ${percent}%;">${percent}%</div>
                     </div>
                 </div>
             `;
         });
         
-        html += `
-                    </div>
+        html += `</div></div><div>
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 15px;">
+                <h4 style="margin: 0;">업무 방해 지수</h4>
+                <button onclick="showDisruptionHelp()" style="background: #17a2b8; color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; font-size: 14px; font-weight: bold;">?</button>
+            </div>
+            <div style="background: linear-gradient(135deg, ${isHigh ? '#f093fb, #f5576c' : '#4facfe, #00f2fe'}); padding: 40px 20px; border-radius: 12px; text-align: center; color: white;">
+                <div style="font-size: 18px; opacity: 0.9; margin-bottom: 15px;">현재 상태</div>
+                <div style="font-size: 64px; font-weight: bold; margin: 20px 0;">${isHigh ? '높음' : '양호'}</div>
+                <div style="font-size: 16px; opacity: 0.9;">${isHigh ? '⚠️ 인터럽트가 많습니다' : '✅ 안정적입니다'}</div>
+            </div>
+            <div style="margin-top: 20px; display: grid; gap: 10px;">
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; text-align: center;">
+                    <div style="font-size: 13px; color: #666;">총 인터럽트</div>
+                    <div style="font-size: 24px; font-weight: bold; color: #dc3545; margin-top: 5px;">${interrupts.length}건</div>
                 </div>
-                
-                <div>
-                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 15px;">
-                        <h4 style="margin: 0;">업무 방해 지수</h4>
-                        <button onclick="showDisruptionHelp()" style="
-                            background: var(--info);
-                            color: white;
-                            border: none;
-                            border-radius: 50%;
-                            width: 24px;
-                            height: 24px;
-                            cursor: pointer;
-                            font-size: 14px;
-                            font-weight: bold;
-                            display: flex;
-                            align-items: center;
-                            justify-content: center;
-                        ">?</button>
-                    </div>
-                    
-                    <div style="background: ${isHigh ? 'linear-gradient(135deg, #f093fb, #f5576c)' : 'linear-gradient(135deg, #4facfe, #00f2fe)'}; 
-                                padding: 40px 20px; 
-                                border-radius: 12px; 
-                                text-align: center;
-                                color: white;">
-                        <div style="font-size: 18px; opacity: 0.9; margin-bottom: 15px;">현재 상태</div>
-                        <div style="font-size: 64px; font-weight: bold; margin: 20px 0;">
-                            ${isHigh ? '높음' : '양호'}
-                        </div>
-                        <div style="font-size: 16px; opacity: 0.9;">
-                            ${isHigh ? '⚠️ 인터럽트가 많습니다' : '✅ 안정적입니다'}
-                        </div>
-                    </div>
-                    
-                    <div style="margin-top: 20px; display: grid; gap: 10px;">
-                        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; text-align: center;">
-                            <div style="font-size: 13px; color: #666; margin-bottom: 5px;">총 인터럽트</div>
-                            <div style="font-size: 24px; font-weight: bold; color: var(--danger);">${interrupts.length}건</div>
-                        </div>
-                        
-                        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; text-align: center;">
-                            <div style="font-size: 13px; color: #666; margin-bottom: 5px;">총 손실 시간</div>
-                            <div style="font-size: 24px; font-weight: bold; color: var(--warning);">${totalHours.toFixed(1)}시간</div>
-                        </div>
-                    </div>
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; text-align: center;">
+                    <div style="font-size: 13px; color: #666;">총 손실 시간</div>
+                    <div style="font-size: 24px; font-weight: bold; color: #ffc107; margin-top: 5px;">${totalHours.toFixed(1)}시간</div>
                 </div>
             </div>
-        `;
+        </div></div>`;
         
         chartContainer.innerHTML = html;
         
     } catch (error) {
         console.error('인터럽트 분석 오류:', error);
-        chartContainer.innerHTML = '<div class="alert alert-danger">데이터 로딩 실패</div>';
+        chartContainer.innerHTML = '<div style="color: red;">데이터 로딩 실패</div>';
     }
 }
 
-// 도움말 함수
 function showDisruptionHelp() {
     alert(`📊 업무 방해 지수 계산 방식
 
@@ -473,94 +334,57 @@ function showDisruptionHelp() {
 • 팀원 1인당 평균 10시간 초과
 • 정기 회의 시간 조정 권장
 
-💡 기준
-5명 팀 기준 월 160시간 중
+💡 기준: 5명 팀 기준 월 160시간 중
 50시간 = 약 30% (업무 집중도 임계점)`);
 }
 
-// 3. 팀 생산성 (자동 계산)
 async function loadProductivityDashboard(container) {
     const chartContainer = container.querySelector('#productivity-dashboard');
     
     try {
-        const [projects, interrupts] = await Promise.all([
-            getProjects(),
-            getInterrupts()
-        ]);
+        const [projects, interrupts] = await Promise.all([getProjects(), getInterrupts()]);
         
-        // 프로젝트 완료율
         const totalProjects = projects.length;
         const completedProjects = projects.filter(p => p['상태'] === '완료').length;
         const completionRate = totalProjects > 0 ? (completedProjects / totalProjects * 100).toFixed(0) : 0;
         
-        // 평균 인터럽트 대응 시간
-        const totalInterruptHours = interrupts.reduce((sum, item) => 
-            sum + (parseFloat(item['예상소요시간']) || 0), 0);
-        const avgInterruptTime = interrupts.length > 0 ? 
-            (totalInterruptHours / interrupts.length).toFixed(1) : 0;
+        const totalInterruptHours = interrupts.reduce((sum, item) => sum + (parseFloat(item['예상소요시간']) || 0), 0);
+        const avgInterruptTime = interrupts.length > 0 ? (totalInterruptHours / interrupts.length).toFixed(1) : 0;
         
-        // 생산성 점수 계산 (0-100)
-        // 프로젝트 완료율 60% + 인터럽트 영향도 40%
         const projectScore = completionRate * 0.6;
-        const interruptPenalty = Math.min(totalInterruptHours / 10, 40); // 최대 40점 감점
+        const interruptPenalty = Math.min(totalInterruptHours / 10, 40);
         const productivityScore = Math.max(projectScore - interruptPenalty, 0).toFixed(0);
         
         let grade, gradeColor;
         if (productivityScore >= 80) {
-            grade = 'S (우수)';
-            gradeColor = '#28a745';
+            grade = 'S (우수)'; gradeColor = '#28a745';
         } else if (productivityScore >= 60) {
-            grade = 'A (양호)';
-            gradeColor = '#17a2b8';
+            grade = 'A (양호)'; gradeColor = '#17a2b8';
         } else if (productivityScore >= 40) {
-            grade = 'B (보통)';
-            gradeColor = '#ffc107';
+            grade = 'B (보통)'; gradeColor = '#ffc107';
         } else {
-            grade = 'C (개선필요)';
-            gradeColor = '#dc3545';
+            grade = 'C (개선필요)'; gradeColor = '#dc3545';
         }
         
         let html = `
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                <div class="productivity-card" style="background: linear-gradient(135deg, ${gradeColor}, #764ba2);">
+                <div style="background: linear-gradient(135deg, ${gradeColor}, #764ba2); color: white; padding: 30px; border-radius: 12px; text-align: center;">
                     <div style="font-size: 18px; opacity: 0.9;">팀 생산성 점수</div>
-                    <div class="productivity-score">${productivityScore}</div>
-                    <div class="productivity-grade">${grade}</div>
+                    <div style="font-size: 64px; font-weight: bold; margin: 20px 0;">${productivityScore}</div>
+                    <div style="font-size: 24px; opacity: 0.9;">${grade}</div>
                 </div>
-                
                 <div style="display: grid; gap: 15px;">
                     <div style="background: #f8f9fa; padding: 20px; border-radius: 8px;">
                         <div style="font-size: 14px; color: #666; margin-bottom: 5px;">프로젝트 완료율</div>
-                        <div style="font-size: 28px; font-weight: bold; color: var(--primary);">
-                            ${completionRate}%
-                        </div>
-                        <div style="font-size: 13px; color: #666; margin-top: 5px;">
-                            ${completedProjects}개 / ${totalProjects}개 완료
-                        </div>
+                        <div style="font-size: 28px; font-weight: bold; color: var(--primary);">${completionRate}%</div>
+                        <div style="font-size: 13px; color: #666; margin-top: 5px;">${completedProjects}개 / ${totalProjects}개 완료</div>
                     </div>
-                    
                     <div style="background: #f8f9fa; padding: 20px; border-radius: 8px;">
                         <div style="font-size: 14px; color: #666; margin-bottom: 5px;">평균 인터럽트 시간</div>
-                        <div style="font-size: 28px; font-weight: bold; color: var(--warning);">
-                            ${avgInterruptTime}h
-                        </div>
-                        <div style="font-size: 13px; color: #666; margin-top: 5px;">
-                            건당 평균 소요 시간
-                        </div>
+                        <div style="font-size: 28px; font-weight: bold; color: #ffc107;">${avgInterruptTime}h</div>
+                        <div style="font-size: 13px; color: #666; margin-top: 5px;">건당 평균 소요 시간</div>
                     </div>
                 </div>
-            </div>
-            
-            <div style="margin-top: 25px; padding: 20px; background: #f8f9fa; border-radius: 8px;">
-                <h4 style="margin-bottom: 10px;">💡 생산성 향상 제안</h4>
-                <ul style="margin: 0; padding-left: 20px; line-height: 1.8;">
-                    ${totalInterruptHours > 50 ? 
-                        '<li>인터럽트가 많습니다. 정기적인 회의 시간을 정해 일괄 처리를 고려하세요.</li>' : ''}
-                    ${completionRate < 50 ? 
-                        '<li>프로젝트 완료율이 낮습니다. 리소스 재배치를 검토하세요.</li>' : ''}
-                    ${productivityScore >= 80 ? 
-                        '<li>✅ 현재 생산성이 우수합니다. 이 수준을 유지하세요!</li>' : ''}
-                </ul>
             </div>
         `;
         
@@ -568,7 +392,7 @@ async function loadProductivityDashboard(container) {
         
     } catch (error) {
         console.error('생산성 대시보드 오류:', error);
-        chartContainer.innerHTML = '<div class="alert alert-danger">데이터 로딩 실패</div>';
+        chartContainer.innerHTML = '<div style="color: red;">데이터 로딩 실패</div>';
     }
 }
 
